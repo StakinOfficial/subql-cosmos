@@ -251,7 +251,16 @@ function wrapMsg(
 ): CosmosMessage[] {
   const msgs: CosmosMessage[] = [];
   for (const tx of txs) {
-    for (let i = 0; i < tx.decodedTx.body.messages.length; i++) {
+    let length = 0;
+    try {
+      length = tx.decodedTx.body.messages.length;
+    } catch (e) {
+      // if not able to decode trx skip.
+      logger.warn(
+        `Unable to raw decode tx=${tx.hash} at block ${block.header.height}`,
+      );
+    }
+    for (let i = 0; i < length; i++) {
       msgs.push(wrapCosmosMsg(block, tx, i, api));
     }
   }
