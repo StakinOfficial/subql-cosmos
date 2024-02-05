@@ -238,6 +238,18 @@ function wrapCosmosMsg(
       typeUrl: rawMessage.typeUrl,
       get decodedMsg() {
         delete this.decodedMsg;
+        if (rawMessage.typeUrl === '/cosmos.authz.v1beta1.MsgExec') {
+          const decodedMessage = api.decodeMsg<{ msgs: any[] }>(rawMessage);
+          if (isObjectLike(decodedMessage.msgs)) {
+            decodedMessage.msgs = decodedMessage.msgs.map((msg) => ({
+              typeUrl: msg.typeUrl,
+              get decodedMsg() {
+                return api.decodeMsg(msg);
+              },
+            }));
+          }
+          return (this.decodedMsg = decodedMessage);
+        }
         return (this.decodedMsg = api.decodeMsg(rawMessage));
       },
     },
