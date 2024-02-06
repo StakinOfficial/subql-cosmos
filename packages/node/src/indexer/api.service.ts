@@ -6,7 +6,7 @@ import { CosmWasmClient, IndexedTx } from '@cosmjs/cosmwasm-stargate';
 import { toHex } from '@cosmjs/encoding';
 import { Uint53 } from '@cosmjs/math';
 import { DecodeObject, GeneratedType, Registry } from '@cosmjs/proto-signing';
-import { Block, defaultRegistryTypes } from '@cosmjs/stargate';
+import { Block, SearchTxQuery, defaultRegistryTypes } from '@cosmjs/stargate';
 import {
   Tendermint37Client,
   toRfc3339WithNanoseconds,
@@ -25,6 +25,8 @@ import {
   ApiService as BaseApiService,
 } from '@subql/node-core';
 import { CosmWasmSafeClient } from '@subql/types-cosmos/interfaces';
+import { TxMsgData } from 'cosmjs-types/cosmos/base/abci/v1beta1/abci';
+import { MsgCancelUnbondingDelegation } from 'cosmjs-types/cosmos/staking/v1beta1/tx';
 import {
   MsgClearAdmin,
   MsgExecuteContract,
@@ -68,7 +70,18 @@ export class ApiService
       ['/cosmwasm.wasm.v1.MsgUpdateAdmin', MsgUpdateAdmin],
     ];
 
-    const registry = new Registry([...defaultRegistryTypes, ...wasmTypes]);
+    const stakingMissingTypes: ReadonlyArray<[string, GeneratedType]> = [
+      [
+        '/cosmos.staking.v1beta1.MsgCancelUnbondingDelegation',
+        MsgCancelUnbondingDelegation,
+      ],
+    ];
+
+    const registry = new Registry([
+      ...defaultRegistryTypes,
+      ...wasmTypes,
+      ...stakingMissingTypes,
+    ]);
 
     for (const typeurl in chaintypes) {
       registry.register(typeurl, chaintypes[typeurl]);
@@ -163,7 +176,7 @@ export class CosmosClient extends CosmWasmClient {
 
   // eslint-disable-next-line @typescript-eslint/require-await
   async txInfoByHeight(height: number): Promise<readonly IndexedTx[]> {
-    return this.searchTx({ height: height });
+    return this.searchTx(`tx.height =  ${height}`);
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await
@@ -249,16 +262,32 @@ export class CosmosSafeClient
     ).validators;
   }
 
-  async searchTx(): Promise<readonly IndexedTx[]> {
-    const txs: readonly IndexedTx[] = await this.safeTxsQuery(
-      `tx.height=${this.height}`,
-    );
+  async searchTx(query: SearchTxQuery): Promise<IndexedTx[]> {
+    let rawQuery: string;
+
+    if (typeof query === 'string') {
+      rawQuery = query;
+    } else if (Array.isArray(query)) {
+      rawQuery = query
+        .map((t) => {
+          // numeric values must not have quotes https://github.com/cosmos/cosmjs/issues/1462
+          if (typeof t.value === 'string') return `${t.key}='${t.value}'`;
+          else return `${t.key}=${t.value}`;
+        })
+        .join(' AND ');
+    } else {
+      throw new Error('Got unsupported query type.');
+    }
+
+    const txs: IndexedTx[] = await this.safeTxsQuery(rawQuery);
+
     return txs;
   }
 
-  private async safeTxsQuery(query: string): Promise<readonly IndexedTx[]> {
+  private async safeTxsQuery(query: string): Promise<IndexedTx[]> {
     const results = await this.forceGetTmClient().txSearchAll({ query: query });
     return results.txs.map((tx) => {
+      const txMsgData = TxMsgData.decode(tx.result.data ?? new Uint8Array());
       return {
         txIndex: tx.index,
         height: tx.height,
@@ -275,6 +304,7 @@ export class CosmosSafeClient
             value: Buffer.from(attr.value).toString('utf8'),
           })),
         })),
+        msgResponses: txMsgData.msgResponses,
       };
     });
   }
