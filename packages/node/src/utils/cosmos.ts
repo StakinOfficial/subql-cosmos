@@ -9,7 +9,6 @@ import { fromTendermintEvent } from '@cosmjs/stargate';
 import { Log, parseRawLog } from '@cosmjs/stargate/build/logs';
 import {
   BlockResponse,
-  BlockResultsResponse,
   TxData,
   Event,
 } from '@cosmjs/tendermint-rpc/build/tendermint37';
@@ -28,6 +27,7 @@ import { isObjectLike } from 'lodash';
 import { isLong } from 'long';
 import { CosmosClient } from '../indexer/api.service';
 import { BlockContent } from '../indexer/types';
+import { BlockResultsResponse } from './sei-overrides';
 
 const logger = getLogger('fetch');
 
@@ -368,8 +368,9 @@ class LazyBlockContent implements BlockContent {
   private _wrappedTransaction: CosmosTransaction[];
   private _wrappedMessage: CosmosMessage[];
   private _wrappedEvent: CosmosEvent[];
-  private _wrappedBeginBlockEvents: CosmosEvent[];
-  private _wrappedEndBlockEvents: CosmosEvent[];
+  // private _wrappedBeginBlockEvents: CosmosEvent[];
+  // private _wrappedEndBlockEvents: CosmosEvent[];
+  private _wrappedFinalizeBlockEvents: CosmosEvent[];
   private _eventIdx = 0; //To maintain a valid count over begin block events, tx events and end block events
 
   constructor(
@@ -414,30 +415,43 @@ class LazyBlockContent implements BlockContent {
     return this._wrappedEvent;
   }
 
-  get beginBlockEvents() {
-    if (!this._wrappedBeginBlockEvents) {
-      this._wrappedBeginBlockEvents = wrapBlockBeginAndEndEvents(
+  // get beginBlockEvents() {
+  //   if (!this._wrappedBeginBlockEvents) {
+  //     this._wrappedBeginBlockEvents = wrapBlockBeginAndEndEvents(
+  //       this.block,
+  //       [...this._results.beginBlockEvents],
+  //       this._eventIdx,
+  //     );
+  //     this._eventIdx += this._wrappedBeginBlockEvents.length;
+  //   }
+
+  //   return this._wrappedBeginBlockEvents;
+  // }
+
+  // get endBlockEvents() {
+  //   if (!this._wrappedEndBlockEvents) {
+  //     this._wrappedEndBlockEvents = wrapBlockBeginAndEndEvents(
+  //       this.block,
+  //       [...this._results.endBlockEvents],
+  //       this._eventIdx,
+  //     );
+  //     this._eventIdx += this._wrappedEndBlockEvents.length;
+  //   }
+
+  //   return this._wrappedEndBlockEvents;
+  // }
+
+  get finalizeBlockEvents() {
+    if (!this._wrappedFinalizeBlockEvents) {
+      this._wrappedFinalizeBlockEvents = wrapBlockBeginAndEndEvents(
         this.block,
-        [...this._results.beginBlockEvents],
+        [...this._results.finalizeBlockEvents],
         this._eventIdx,
       );
-      this._eventIdx += this._wrappedBeginBlockEvents.length;
+      this._eventIdx += this._wrappedFinalizeBlockEvents.length;
     }
 
-    return this._wrappedBeginBlockEvents;
-  }
-
-  get endBlockEvents() {
-    if (!this._wrappedEndBlockEvents) {
-      this._wrappedEndBlockEvents = wrapBlockBeginAndEndEvents(
-        this.block,
-        [...this._results.endBlockEvents],
-        this._eventIdx,
-      );
-      this._eventIdx += this._wrappedEndBlockEvents.length;
-    }
-
-    return this._wrappedEndBlockEvents;
+    return this._wrappedFinalizeBlockEvents;
   }
 }
 

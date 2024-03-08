@@ -9,7 +9,6 @@ import {
 } from '@cosmjs/proto-signing';
 import { defaultRegistryTypes } from '@cosmjs/stargate';
 import { longify } from '@cosmjs/stargate/build/queryclient';
-import { Tendermint37Client } from '@cosmjs/tendermint-rpc';
 import {
   CosmosMessageFilter,
   CosmosBlock,
@@ -27,6 +26,7 @@ import {
 import { CosmosClient } from '../indexer/api.service';
 import { HttpClient } from '../indexer/rpc-clients';
 import { filterMessageData, wrapEvent } from './cosmos';
+import { Tendermint37Client } from './sei-overrides';
 
 const ENDPOINT = 'https://rpc-archive.junonetwork.io/';
 const CHAINID = 'juno-1';

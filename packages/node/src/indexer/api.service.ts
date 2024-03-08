@@ -7,14 +7,10 @@ import { toHex } from '@cosmjs/encoding';
 import { Uint53 } from '@cosmjs/math';
 import { DecodeObject, GeneratedType, Registry } from '@cosmjs/proto-signing';
 import { Block, SearchTxQuery, defaultRegistryTypes } from '@cosmjs/stargate';
-import {
-  Tendermint37Client,
-  toRfc3339WithNanoseconds,
-} from '@cosmjs/tendermint-rpc';
+import { toRfc3339WithNanoseconds } from '@cosmjs/tendermint-rpc';
 import {
   BlockResponse,
   Validator,
-  BlockResultsResponse,
 } from '@cosmjs/tendermint-rpc/build/tendermint37/responses';
 import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -37,6 +33,10 @@ import {
 } from 'cosmjs-types/cosmwasm/wasm/v1/tx';
 import { SubqueryProject } from '../configure/SubqueryProject';
 import * as CosmosUtil from '../utils/cosmos';
+import {
+  Tendermint37Client,
+  BlockResultsResponse,
+} from '../utils/sei-overrides';
 import { CosmosClientConnection } from './cosmosClient.connection';
 import { BlockContent } from './types';
 
@@ -156,7 +156,7 @@ export class CosmosClient extends CosmWasmClient {
     private readonly tendermintClient: Tendermint37Client,
     public registry: Registry,
   ) {
-    super(tendermintClient);
+    super(tendermintClient.tmClient);
   }
 
   /*
@@ -232,7 +232,7 @@ export class CosmosSafeClient
   height: number;
 
   constructor(tmClient: Tendermint37Client, height: number) {
-    super(tmClient);
+    super(tmClient.tmClient);
     this.height = height;
   }
 

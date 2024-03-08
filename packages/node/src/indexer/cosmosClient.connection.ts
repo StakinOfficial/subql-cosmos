@@ -3,7 +3,6 @@
 
 import { Registry } from '@cosmjs/proto-signing';
 import { HttpEndpoint } from '@cosmjs/stargate';
-import { Tendermint37Client } from '@cosmjs/tendermint-rpc';
 import {
   ApiConnectionError,
   ApiErrorType,
@@ -11,6 +10,7 @@ import {
   NetworkMetadataPayload,
 } from '@subql/node-core';
 import { getLogger } from '@subql/node-core/dist';
+import { Tendermint37Client } from '../utils/sei-overrides';
 import { CosmosClient, CosmosSafeClient } from './api.service';
 import { HttpClient, WebsocketClient } from './rpc-clients';
 import { BlockContent } from './types';

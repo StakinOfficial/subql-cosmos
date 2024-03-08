@@ -13,8 +13,9 @@ export interface BlockContent {
   transactions: CosmosTransaction[];
   messages: CosmosMessage[];
   events: CosmosEvent[];
-  beginBlockEvents: CosmosEvent[];
-  endBlockEvents: CosmosEvent[];
+  // beginBlockEvents: CosmosEvent[];
+  // endBlockEvents: CosmosEvent[];
+  finalizeBlockEvents: CosmosEvent[];
 }
 
 export type BestBlocks = Record<number, string>;
