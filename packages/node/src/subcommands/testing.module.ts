@@ -1,4 +1,4 @@
-// Copyright 2020-2023 SubQuery Pte Ltd authors & contributors
+// Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
 import { Module } from '@nestjs/common';
@@ -9,21 +9,20 @@ import {
   ConnectionPoolStateManager,
   DbModule,
   InMemoryCacheService,
+  NodeConfig,
   PoiService,
   PoiSyncService,
   StoreCacheService,
   StoreService,
   TestRunner,
+  SandboxService,
 } from '@subql/node-core';
 import { ConfigureModule } from '../configure/configure.module';
-import { SubqueryProject } from '../configure/SubqueryProject';
 import { ApiService } from '../indexer/api.service';
-import { CosmosClientConnection } from '../indexer/cosmosClient.connection';
 import { DsProcessorService } from '../indexer/ds-processor.service';
 import { DynamicDsService } from '../indexer/dynamic-ds.service';
 import { IndexerManager } from '../indexer/indexer.manager';
 import { ProjectService } from '../indexer/project.service';
-import { SandboxService } from '../indexer/sandbox.service';
 import { UnfinalizedBlocksService } from '../indexer/unfinalizedBlocks.service';
 
 @Module({
@@ -46,26 +45,19 @@ import { UnfinalizedBlocksService } from '../indexer/unfinalizedBlocks.service';
     },
     {
       provide: ApiService,
-      useFactory: async (
-        project: SubqueryProject,
-        connectionPoolService: ConnectionPoolService<CosmosClientConnection>,
-        eventEmitter: EventEmitter2,
-      ) => {
-        const apiService = new ApiService(
-          project,
-          connectionPoolService,
-          eventEmitter,
-        );
-        await apiService.init();
-        return apiService;
-      },
-      inject: ['ISubqueryProject', ConnectionPoolService, EventEmitter2],
+      useFactory: ApiService.create.bind(ApiService),
+      inject: [
+        'ISubqueryProject',
+        ConnectionPoolService,
+        EventEmitter2,
+        NodeConfig,
+      ],
     },
     SchedulerRegistry,
     TestRunner,
     {
       provide: 'IApi',
-      useClass: ApiService,
+      useExisting: ApiService,
     },
     {
       provide: 'IIndexerManager',

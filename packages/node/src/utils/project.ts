@@ -1,6 +1,7 @@
-// Copyright 2020-2023 SubQuery Pte Ltd authors & contributors
+// Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
+import os from 'os';
 import {
   CosmosRuntimeHandler,
   CosmosCustomHandler,
@@ -28,13 +29,6 @@ export async function processNetworkConfig(
   network: any,
   reader: Reader,
 ): Promise<CosmosProjectNetConfig> {
-  if (network.chainId && network.genesisHash) {
-    throw new Error('Please only provide one of chainId and genesisHash');
-  } else if (network.genesisHash && !network.chainId) {
-    network.chainId = network.genesisHash;
-  }
-  delete network.genesisHash;
-
   const chaintypes = new Map<string, CosmosChainType>() as Map<
     string,
     CosmosChainType
@@ -59,7 +53,7 @@ export async function processNetworkConfig(
 export async function loadNetworkChainType(
   reader: Reader,
   file: string,
-): Promise<[string, protobuf.Root]> {
+): Promise<[string | undefined, protobuf.Root]> {
   const proto = await reader.getFile(file);
 
   if (!proto) throw new Error(`Unable to load chain type from ${file}`);
@@ -67,4 +61,11 @@ export async function loadNetworkChainType(
   const { package: packageName, root } = protobuf.parse(proto);
 
   return [packageName, root];
+}
+
+export function isTmpDir(path: string): boolean {
+  const normalizedPath = path.replace(/\\/g, '/').toLowerCase();
+  return normalizedPath.startsWith(
+    os.tmpdir().replace(/\\/g, '/').toLowerCase(),
+  );
 }

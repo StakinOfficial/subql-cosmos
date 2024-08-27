@@ -1,32 +1,25 @@
-// Copyright 2020-2023 SubQuery Pte Ltd authors & contributors
+// Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
-import { TextDecoder } from 'util';
+import assert from 'assert';
 import { CosmWasmClient, IndexedTx } from '@cosmjs/cosmwasm-stargate';
 import { toHex } from '@cosmjs/encoding';
 import { Uint53 } from '@cosmjs/math';
-import { DecodeObject, GeneratedType, Registry } from '@cosmjs/proto-signing';
-import { Block, SearchTxQuery, defaultRegistryTypes } from '@cosmjs/stargate';
-import {
-  Tendermint37Client,
-  toRfc3339WithNanoseconds,
-} from '@cosmjs/tendermint-rpc';
-import {
-  BlockResponse,
-  Validator,
-  BlockResultsResponse,
-} from '@cosmjs/tendermint-rpc/build/tendermint37/responses';
-import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
+import { GeneratedType, Registry } from '@cosmjs/proto-signing';
+import { Block, defaultRegistryTypes, SearchTxQuery } from '@cosmjs/stargate';
+import { CometClient, toRfc3339WithNanoseconds } from '@cosmjs/tendermint-rpc';
+import { Injectable, OnApplicationShutdown } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CosmosProjectNetConfig } from '@subql/common-cosmos';
 import {
-  getLogger,
-  ConnectionPoolService,
   ApiService as BaseApiService,
+  ConnectionPoolService,
+  getLogger,
+  IBlock,
+  NodeConfig,
 } from '@subql/node-core';
 import { CosmWasmSafeClient } from '@subql/types-cosmos/interfaces';
 import { TxMsgData } from 'cosmjs-types/cosmos/base/abci/v1beta1/abci';
-import { MsgCancelUnbondingDelegation } from 'cosmjs-types/cosmos/staking/v1beta1/tx';
 import {
   MsgClearAdmin,
   MsgExecuteContract,
@@ -35,31 +28,36 @@ import {
   MsgStoreCode,
   MsgUpdateAdmin,
 } from 'cosmjs-types/cosmwasm/wasm/v1/tx';
+import { CosmosNodeConfig } from '../configure/NodeConfig';
 import { SubqueryProject } from '../configure/SubqueryProject';
 import * as CosmosUtil from '../utils/cosmos';
+import { KyveApi } from '../utils/kyve/kyve';
 import { CosmosClientConnection } from './cosmosClient.connection';
-import { BlockContent } from './types';
+import { BlockContent, BlockResponse, BlockResultsResponse } from './types';
 
 const logger = getLogger('api');
 
+const MAX_RECONNECT_ATTEMPTS = 5;
+const KYVE_BUFFER_RANGE = 10;
+
 @Injectable()
 export class ApiService
-  extends BaseApiService<CosmosClient, CosmosSafeClient, BlockContent[]>
+  extends BaseApiService<CosmosClient, CosmosSafeClient, IBlock<BlockContent>[]>
   implements OnApplicationShutdown
 {
-  private fetchBlocksBatches = CosmosUtil.fetchBlocksBatches;
-  registry: Registry;
-
-  constructor(
-    @Inject('ISubqueryProject') private project: SubqueryProject,
+  private constructor(
     connectionPoolService: ConnectionPoolService<CosmosClientConnection>,
     eventEmitter: EventEmitter2,
+    public registry: Registry,
+    private kyveApi?: KyveApi,
   ) {
     super(connectionPoolService, eventEmitter);
   }
 
-  private async buildRegistry(): Promise<Registry> {
-    const chaintypes = await this.getChainType(this.project.network);
+  private static async buildRegistry(
+    network: Partial<CosmosProjectNetConfig>,
+  ): Promise<Registry> {
+    const chaintypes = await this.getChainType(network);
 
     const wasmTypes: ReadonlyArray<[string, GeneratedType]> = [
       ['/cosmwasm.wasm.v1.MsgClearAdmin', MsgClearAdmin],
@@ -70,18 +68,7 @@ export class ApiService
       ['/cosmwasm.wasm.v1.MsgUpdateAdmin', MsgUpdateAdmin],
     ];
 
-    const stakingMissingTypes: ReadonlyArray<[string, GeneratedType]> = [
-      [
-        '/cosmos.staking.v1beta1.MsgCancelUnbondingDelegation',
-        MsgCancelUnbondingDelegation,
-      ],
-    ];
-
-    const registry = new Registry([
-      ...defaultRegistryTypes,
-      ...wasmTypes,
-      ...stakingMissingTypes,
-    ]);
+    const registry = new Registry([...defaultRegistryTypes, ...wasmTypes]);
 
     for (const typeurl in chaintypes) {
       registry.register(typeurl, chaintypes[typeurl]);
@@ -94,26 +81,83 @@ export class ApiService
     await this.connectionPoolService.onApplicationShutdown();
   }
 
-  async init(): Promise<ApiService> {
-    const { network } = this.project;
+  static async create(
+    project: SubqueryProject,
+    connectionPoolService: ConnectionPoolService<CosmosClientConnection>,
+    eventEmitter: EventEmitter2,
+    nodeConfig: NodeConfig,
+  ): Promise<ApiService> {
+    const { network } = project;
+    const cosmosNodeConfig = new CosmosNodeConfig(nodeConfig);
 
-    this.registry = await this.buildRegistry();
+    const registry = await this.buildRegistry(network);
 
-    await this.createConnections(
-      network,
-      (endpoint) =>
-        CosmosClientConnection.create(
-          endpoint,
-          this.fetchBlocksBatches,
-          this.registry,
-        ),
-      (connection: CosmosClientConnection) => {
-        const api = connection.unsafeApi;
-        return api.getChainId();
-      },
+    let kyveApi: KyveApi | undefined;
+
+    if (
+      cosmosNodeConfig.kyveEndpoint &&
+      cosmosNodeConfig.kyveEndpoint !== 'false'
+    ) {
+      try {
+        // Commented to not create conflicts with rpc
+        // TODO test
+        // assert(project.tempDir, 'Expected temp dir to exist for using Kyve');
+        // kyveApi = await KyveApi.create(
+        //   network.chainId,
+        //   cosmosNodeConfig.kyveEndpoint,
+        //   cosmosNodeConfig.kyveStorageUrl,
+        //   cosmosNodeConfig.kyveChainId,
+        //   project.tempDir,
+        //   KYVE_BUFFER_RANGE * nodeConfig.batchSize,
+        // );
+      } catch (e) {
+        logger.warn(`Kyve Api is not connected. ${e}`);
+      }
+    } else {
+      logger.info(`Kyve not connected`);
+    }
+
+    const apiService = new ApiService(
+      connectionPoolService,
+      eventEmitter,
+      registry,
+      kyveApi,
     );
 
-    return this;
+    await apiService.createConnections(network, (endpoint, config) =>
+      CosmosClientConnection.create(
+        endpoint,
+        CosmosUtil.fetchBlocksBatches,
+        registry,
+        config,
+      ),
+    );
+
+    return apiService;
+  }
+
+  // Overrides the super function because of the kyve integration
+  async fetchBlocks(
+    heights: number[],
+    numAttempts = MAX_RECONNECT_ATTEMPTS,
+  ): Promise<IBlock<BlockContent>[]> {
+    return this.retryFetch(async () => {
+      if (this.kyveApi) {
+        try {
+          return await this.kyveApi.fetchBlocksBatches(this.registry, heights);
+        } catch (e: any) {
+          logger.warn(
+            e,
+            `Failed to fetch blocks: ${JSON.stringify(
+              heights,
+            )} via Kyve, trying with RPC`,
+          );
+        }
+      }
+      // Get the latest fetch function from the provider
+      const apiInstance = this.connectionPoolService.api;
+      return apiInstance.fetchBlocks(heights);
+    }, numAttempts);
   }
 
   get api(): CosmosClient {
@@ -126,7 +170,7 @@ export class ApiService
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await
-  async getChainType(
+  private static async getChainType(
     network: Partial<CosmosProjectNetConfig>,
   ): Promise<Record<string, GeneratedType>> {
     if (!network.chaintypes) {
@@ -153,54 +197,25 @@ export class ApiService
 
 export class CosmosClient extends CosmWasmClient {
   constructor(
-    private readonly tendermintClient: Tendermint37Client,
+    private readonly _cometClient: CometClient,
     public registry: Registry,
   ) {
-    super(tendermintClient);
+    super(_cometClient);
   }
-
-  /*
-  async chainId(): Promise<string> {
-    return this.getChainId();
-  }
-
-  async finalisedHeight(): Promise<number> {
-    return this.getHeight();
-  }
-  */
 
   // eslint-disable-next-line @typescript-eslint/require-await
   async blockInfo(height?: number): Promise<BlockResponse> {
-    return this.tendermintClient.block(height);
+    return this._cometClient.block(height);
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await
   async txInfoByHeight(height: number): Promise<readonly IndexedTx[]> {
-    return this.searchTx(`tx.height =  ${height}`);
+    return this.searchTx(`tx.height=${height}`);
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await
   async blockResults(height: number): Promise<BlockResultsResponse> {
-    return this.tendermintClient.blockResults(height);
-  }
-
-  decodeMsg<T = unknown>(msg: DecodeObject): T {
-    try {
-      const decodedMsg = this.registry.decode(msg);
-      if (
-        [
-          '/cosmwasm.wasm.v1.MsgExecuteContract',
-          '/cosmwasm.wasm.v1.MsgMigrateContract',
-          '/cosmwasm.wasm.v1.MsgInstantiateContract',
-        ].includes(msg.typeUrl)
-      ) {
-        decodedMsg.msg = JSON.parse(new TextDecoder().decode(decodedMsg.msg));
-      }
-      return decodedMsg;
-    } catch (e) {
-      logger.error(e, 'Failed to decode message');
-      throw e;
-    }
+    return this._cometClient.blockResults(height);
   }
 
   static handleError(e: Error): Error {
@@ -231,14 +246,14 @@ export class CosmosSafeClient
 {
   height: number;
 
-  constructor(tmClient: Tendermint37Client, height: number) {
-    super(tmClient);
+  constructor(cometClient: CometClient, height: number) {
+    super(cometClient);
     this.height = height;
   }
 
   // Deprecate
   async getBlock(): Promise<Block> {
-    const response = await this.forceGetTmClient().block(this.height);
+    const response = await this.forceGetCometClient().block(this.height);
     return {
       id: toHex(response.blockId.hash).toUpperCase(),
       header: {
@@ -254,38 +269,27 @@ export class CosmosSafeClient
     };
   }
 
-  async validators(): Promise<readonly Validator[]> {
+  async validators(): Promise<
+    Awaited<ReturnType<CometClient['validators']>>['validators']
+  > {
     return (
-      await this.forceGetTmClient().validators({
+      await this.forceGetCometClient().validators({
         height: this.height,
       })
     ).validators;
   }
 
   async searchTx(query: SearchTxQuery): Promise<IndexedTx[]> {
-    let rawQuery: string;
-
-    if (typeof query === 'string') {
-      rawQuery = query;
-    } else if (Array.isArray(query)) {
-      rawQuery = query
-        .map((t) => {
-          // numeric values must not have quotes https://github.com/cosmos/cosmjs/issues/1462
-          if (typeof t.value === 'string') return `${t.key}='${t.value}'`;
-          else return `${t.key}=${t.value}`;
-        })
-        .join(' AND ');
-    } else {
-      throw new Error('Got unsupported query type.');
-    }
-
-    const txs: IndexedTx[] = await this.safeTxsQuery(rawQuery);
-
+    const txs: IndexedTx[] = await this.safeTxsQuery(
+      `tx.height=${this.height}`,
+    );
     return txs;
   }
 
   private async safeTxsQuery(query: string): Promise<IndexedTx[]> {
-    const results = await this.forceGetTmClient().txSearchAll({ query: query });
+    const results = await this.forceGetCometClient().txSearchAll({
+      query: query,
+    });
     return results.txs.map((tx) => {
       const txMsgData = TxMsgData.decode(tx.result.data ?? new Uint8Array());
       return {
@@ -297,6 +301,7 @@ export class CosmosSafeClient
         tx: tx.tx,
         gasUsed: tx.result.gasUsed,
         gasWanted: tx.result.gasWanted,
+        // msgResponses: [], // TODO can we get these?
         events: tx.result.events.map((evt) => ({
           ...evt,
           attributes: evt.attributes.map((attr) => ({

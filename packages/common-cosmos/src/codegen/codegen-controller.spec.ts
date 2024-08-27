@@ -1,4 +1,4 @@
-// Copyright 2020-2023 SubQuery Pte Ltd authors & contributors
+// Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
 import fs from 'fs';
@@ -45,7 +45,7 @@ describe('Codegen cosmos', () => {
             messages: ['MsgSwapAmountInRoute'],
           },
         },
-      ];
+      ] as any;
       expect(prepareProtobufRenderProps(mockChainTypes, PROJECT_PATH)).toStrictEqual([
         {
           messageNames: ['MsgSwapExactAmountIn'],

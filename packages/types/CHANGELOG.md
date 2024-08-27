@@ -6,6 +6,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.5.2] - 2024-08-12
+### Changed
+- Update dependencies and enable strict TS setting (#278)
+
+## [3.5.1] - 2024-07-30
+### Changed
+- Update cosmos and subql dependencies (#270)
+
+## [3.5.0] - 2024-07-01
+### Added
+- Add type `CosmosNetworkModule` to support cosmos module (#267)
+
+## [3.4.0] - 2024-05-02
+### Changed
+- Update `@subql/types-core` and use types from there (#254)
+
+## [3.3.0] - 2024-04-10
+### Changed
+- Update `@subql/types-core`
+
+## [3.2.4] - 2024-04-05
+### Changed
+- Update `@subql/types-core`
+
+## [3.2.3] - 2024-02-07
+### Changed
+- Update `@subql/types-core`
+
 ## [3.2.2] - 2023-11-30
 ### Changed
 - Sync with `@subql/types-core` 0.4.0
@@ -100,7 +128,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix chainTypes not being in deployments
 
 ## [0.0.5] - 2022-06-15
-[Unreleased]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/3.2.2...HEAD
+[Unreleased]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/3.5.2...HEAD
+[3.5.2]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/3.5.1...types-cosmos/3.5.2
+[3.5.1]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/3.5.0...types-cosmos/3.5.1
+[3.5.0]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/3.4.0...types-cosmos/3.5.0
+[3.4.0]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/3.3.0...types-cosmos/3.4.0
+[3.3.0]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/3.2.4...types-cosmos/3.3.0
+[3.2.4]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/3.2.3...types-cosmos/3.2.4
+[3.2.3]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/3.2.2...types-cosmos/3.2.3
 [3.2.2]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/3.2.1...types-cosmos/3.2.2
 [3.2.1]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/3.2.0...types-cosmos/3.2.1
 [3.2.0]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/3.1.0...types-cosmos/3.2.0

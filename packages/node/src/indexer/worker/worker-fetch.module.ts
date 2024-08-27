@@ -1,55 +1,37 @@
-// Copyright 2020-2023 SubQuery Pte Ltd authors & contributors
+// Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
 import { Module } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
+  WorkerCoreModule,
   ConnectionPoolService,
   WorkerDynamicDsService,
-  ConnectionPoolStateManager,
-  WorkerConnectionPoolStateManager,
-  InMemoryCacheService,
-  WorkerInMemoryCacheService,
+  NodeConfig,
+  WorkerUnfinalizedBlocksService,
 } from '@subql/node-core';
-import { SubqueryProject } from '../../configure/SubqueryProject';
 import { ApiService } from '../api.service';
-import { CosmosClientConnection } from '../cosmosClient.connection';
 import { DsProcessorService } from '../ds-processor.service';
 import { DynamicDsService } from '../dynamic-ds.service';
 import { IndexerManager } from '../indexer.manager';
 import { ProjectService } from '../project.service';
-import { SandboxService } from '../sandbox.service';
 import { UnfinalizedBlocksService } from '../unfinalizedBlocks.service';
 import { WorkerService } from './worker.service';
-import { WorkerUnfinalizedBlocksService } from './worker.unfinalizedBlocks.service';
 
 @Module({
+  imports: [WorkerCoreModule],
   providers: [
     IndexerManager,
     {
-      provide: ConnectionPoolStateManager,
-      useFactory: () =>
-        new WorkerConnectionPoolStateManager((global as any).host),
-    },
-    ConnectionPoolService,
-    {
       provide: ApiService,
-      useFactory: async (
-        project: SubqueryProject,
-        connectionPoolService: ConnectionPoolService<CosmosClientConnection>,
-        eventEmitter: EventEmitter2,
-      ) => {
-        const apiService = new ApiService(
-          project,
-          connectionPoolService,
-          eventEmitter,
-        );
-        await apiService.init();
-        return apiService;
-      },
-      inject: ['ISubqueryProject', ConnectionPoolService, EventEmitter2],
+      useFactory: ApiService.create.bind(ApiService),
+      inject: [
+        'ISubqueryProject',
+        ConnectionPoolService,
+        EventEmitter2,
+        NodeConfig,
+      ],
     },
-    SandboxService,
     DsProcessorService,
     {
       provide: DynamicDsService,
@@ -65,11 +47,6 @@ import { WorkerUnfinalizedBlocksService } from './worker.unfinalizedBlocks.servi
       useFactory: () =>
         new WorkerUnfinalizedBlocksService((global as any).host),
     },
-    {
-      provide: InMemoryCacheService,
-      useFactory: () => new WorkerInMemoryCacheService((global as any).host),
-    },
   ],
-  exports: [],
 })
 export class WorkerFetchModule {}

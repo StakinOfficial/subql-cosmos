@@ -6,6 +6,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.0.3] - 2024-08-23
+### Changed
+- Update deps (#282)
+
+## [5.0.2] - 2024-08-12
+### Changed
+- Update dependencies and enable strict TS setting (#278)
+
+## [5.0.1] - 2024-07-30
+### Changed
+- Update cosmos and subql dependencies (#270)
+
+## [5.0.0] - 2024-07-01
+### Added
+- Add alias follow type of `CosmosNetworkModule`. Also add method `projectCodegen` include steps of cosmos codegen. (#267)
+
+## [4.4.0] - 2024-06-21
+### Changed
+- Add default value in model class to follow ES2022 rule (#264)
+
+## [4.3.0] - 2024-05-02
+### Changed
+- Update dependencies and apply changes to match (#254)
+
+## [4.2.0] - 2024-04-10
+### Changed
+- version bump with `@subql/common`
+
+## [4.1.1] - 2024-02-23
+### Changed
+- version bump with `@subql/common`
+
+## [4.1.0] - 2024-02-07
+### Changed
+- Update `@subql/common`
+
+## [4.0.1] - 2024-02-02
+### Fixed
+- Codegen failing on Windows by using forked version of `telescope` (#226)
+
+### Changed
+- removed deprecated field `fromPartial` from telescope config (#228)
+
 ## [4.0.0] - 2023-12-14
 ### Fixed
 - Codegen generating types with duplicate names leading to invalid TS. (#216)
@@ -115,7 +158,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix chainTypes not being in deployments
 
 ## [0.0.5] - 2022-06-15
-[Unreleased]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/4.0.0...HEAD
+[Unreleased]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/5.0.3...HEAD
+[5.0.3]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/5.0.2...common-cosmos/5.0.3
+[5.0.2]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/5.0.1...common-cosmos/5.0.2
+[5.0.1]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/5.0.0...common-cosmos/5.0.1
+[5.0.0]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/4.4.0...common-cosmos/5.0.0
+[4.4.0]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/4.3.0...common-cosmos/4.4.0
+[4.3.0]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/4.2.0...common-cosmos/4.3.0
+[4.2.0]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/4.1.1...common-cosmos/4.2.0
+[4.1.1]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/4.1.0...common-cosmos/4.1.1
+[4.1.0]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/4.0.1...common-cosmos/4.1.0
+[4.0.1]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/4.0.0...common-cosmos/4.0.1
 [4.0.0]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/3.2.1...common-cosmos/4.0.0
 [3.2.1]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/3.2.0...common-cosmos/3.2.1
 [3.2.0]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/3.1.1...common-cosmos/3.2.0

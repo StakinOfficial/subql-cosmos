@@ -1,7 +1,7 @@
-// Copyright 2020-2023 SubQuery Pte Ltd authors & contributors
+// Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
-import {FileReference} from '@subql/types-core';
+import {FileReference, BaseTemplateDataSource} from '@subql/types-core';
 import {
   SecondLayerHandlerProcessor,
   CosmosCustomDatasource,
@@ -11,39 +11,46 @@ import {
   CosmosRuntimeDatasource,
   CustomDatasourceTemplate,
   RuntimeDatasourceTemplate,
+  SecondLayerHandlerProcessorArray,
 } from '@subql/types-cosmos';
 import {ValidationArguments, ValidatorConstraint, ValidatorConstraintInterface} from 'class-validator';
 import {gte} from 'semver';
 
-export function isCustomCosmosDs(ds: CosmosDatasource): ds is CosmosCustomDatasource<string> {
+export function isCustomCosmosDs(
+  ds: CosmosDatasource | BaseTemplateDataSource<CosmosDatasource>
+): ds is CosmosCustomDatasource<string> {
   return ds.kind !== CosmosDatasourceKind.Runtime && !!(ds as CosmosCustomDatasource<string>).processor;
 }
 
-export function isRuntimeCosmosDs(ds: CosmosDatasource): ds is CosmosRuntimeDatasource {
+export function isRuntimeCosmosDs(
+  ds: CosmosDatasource | BaseTemplateDataSource<CosmosDatasource>
+): ds is CosmosRuntimeDatasource {
   return ds.kind === CosmosDatasourceKind.Runtime;
 }
 
+type DefaultFilter = Record<string, unknown>;
+
 export function isBlockHandlerProcessor<E>(
-  hp: SecondLayerHandlerProcessor<CosmosHandlerKind, unknown, unknown>
-): hp is SecondLayerHandlerProcessor<CosmosHandlerKind.Block, unknown, E> {
+  hp: SecondLayerHandlerProcessorArray<CosmosHandlerKind, DefaultFilter, unknown>
+): hp is SecondLayerHandlerProcessor<CosmosHandlerKind.Block, DefaultFilter, E> {
   return hp.baseHandlerKind === CosmosHandlerKind.Block;
 }
 
 export function isTransactionHandlerProcessor<E>(
-  hp: SecondLayerHandlerProcessor<CosmosHandlerKind, unknown, unknown>
-): hp is SecondLayerHandlerProcessor<CosmosHandlerKind.Transaction, unknown, E> {
+  hp: SecondLayerHandlerProcessorArray<CosmosHandlerKind, DefaultFilter, unknown>
+): hp is SecondLayerHandlerProcessor<CosmosHandlerKind.Transaction, DefaultFilter, E> {
   return hp.baseHandlerKind === CosmosHandlerKind.Transaction;
 }
 
 export function isMessageHandlerProcessor<E>(
-  hp: SecondLayerHandlerProcessor<CosmosHandlerKind, unknown, unknown>
-): hp is SecondLayerHandlerProcessor<CosmosHandlerKind.Message, unknown, E> {
+  hp: SecondLayerHandlerProcessorArray<CosmosHandlerKind, DefaultFilter, unknown>
+): hp is SecondLayerHandlerProcessor<CosmosHandlerKind.Message, DefaultFilter, E> {
   return hp.baseHandlerKind === CosmosHandlerKind.Message;
 }
 
 export function isEventHandlerProcessor<E>(
-  hp: SecondLayerHandlerProcessor<CosmosHandlerKind, unknown, unknown>
-): hp is SecondLayerHandlerProcessor<CosmosHandlerKind.Event, unknown, E> {
+  hp: SecondLayerHandlerProcessorArray<CosmosHandlerKind, DefaultFilter, unknown>
+): hp is SecondLayerHandlerProcessor<CosmosHandlerKind.Event, DefaultFilter, E> {
   return hp.baseHandlerKind === CosmosHandlerKind.Event;
 }
 

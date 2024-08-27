@@ -1,15 +1,17 @@
-// Copyright 2020-2023 SubQuery Pte Ltd authors & contributors
+// Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
 import { Inject, Injectable } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import {
+  IBlock,
   NestLogger,
   NodeConfig,
   TestingService as BaseTestingService,
   TestRunner,
 } from '@subql/node-core';
-import { CosmosProjectDs, SubqueryProject } from '../configure/SubqueryProject';
+import { CosmosDatasource } from '@subql/types-cosmos';
+import { SubqueryProject } from '../configure/SubqueryProject';
 import { CosmosClient, CosmosSafeClient } from '../indexer/api.service';
 import { IndexerManager } from '../indexer/indexer.manager';
 import { ProjectService } from '../indexer/project.service';
@@ -21,7 +23,7 @@ export class TestingService extends BaseTestingService<
   CosmosClient,
   CosmosSafeClient,
   BlockContent,
-  CosmosProjectDs
+  CosmosDatasource
 > {
   constructor(
     nodeConfig: NodeConfig,
@@ -37,7 +39,7 @@ export class TestingService extends BaseTestingService<
         CosmosClient,
         CosmosSafeClient,
         BlockContent,
-        CosmosProjectDs
+        CosmosDatasource
       >,
     ]
   > {
@@ -57,7 +59,7 @@ export class TestingService extends BaseTestingService<
   }
 
   async indexBlock(
-    block: BlockContent,
+    block: IBlock<BlockContent>,
     handler: string,
     indexerManager: IndexerManager,
   ): Promise<void> {

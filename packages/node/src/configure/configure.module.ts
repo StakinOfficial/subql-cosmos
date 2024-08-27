@@ -1,10 +1,10 @@
-// Copyright 2020-2023 SubQuery Pte Ltd authors & contributors
+// Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
 import { DynamicModule, Global, Module } from '@nestjs/common';
 import { NodeConfig, registerApp } from '@subql/node-core';
 import { yargsOptions } from '../yargs';
-import { SubqueryProject } from './SubqueryProject';
+import { createSubQueryProject, SubqueryProject } from './SubqueryProject';
 
 const pjson = require('../../package.json');
 
@@ -18,7 +18,7 @@ export class ConfigureModule {
     const { argv } = yargsOptions;
     return registerApp<SubqueryProject>(
       argv,
-      SubqueryProject.create.bind(SubqueryProject),
+      createSubQueryProject,
       yargsOptions.showHelp.bind(yargsOptions),
       pjson,
     );
