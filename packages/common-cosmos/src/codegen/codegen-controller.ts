@@ -1,19 +1,25 @@
-// Copyright 2020-2023 SubQuery Pte Ltd authors & contributors
+// Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
 import fs from 'fs';
 import path from 'path';
-import telescope from '@cosmology/telescope';
 import cosmwasmCodegen from '@cosmwasm/ts-codegen';
 import {makeTempDir} from '@subql/common';
-import {CosmosChaintypes, CustomModule, CosmosRuntimeDatasource} from '@subql/types-cosmos';
+import {ProjectManifestV1_0_0} from '@subql/types-core/dist/project/versioned/v1_0_0/types';
+import {
+  CosmosChaintypes,
+  CustomModule,
+  CosmosRuntimeDatasource,
+  CosmosProjectManifestV1_0_0,
+} from '@subql/types-cosmos';
+import telescope from '@subql/x-cosmology-telescope';
 import {Data} from 'ejs';
 import {copySync} from 'fs-extra';
 import {upperFirst} from 'lodash';
 import {IDLObject} from 'wasm-ast-types';
 import {isRuntimeCosmosDs} from '../project';
 import {COSMWASM_OPTS, TELESCOPE_OPTS} from './constants';
-import {loadCosmwasmAbis, tmpProtoDir} from './util';
+import {loadCosmwasmAbis, tmpProtoDir, validateCosmosManifest} from './util';
 
 const TYPE_ROOT_DIR = 'src/types';
 
@@ -111,6 +117,7 @@ export function prepareSortedAssets(
   datasources
     .filter((d) => !!d?.assets && isRuntimeCosmosDs(d))
     .forEach((d) => {
+      if (!d.assets) return;
       Object.entries(d.assets).map(([name, value]) => {
         const filePath = path.join(projectPath, value.file);
         if (!fs.existsSync(filePath)) {
@@ -162,7 +169,7 @@ export async function generateCosmwasm(
         );
       })
     );
-  } catch (e) {
+  } catch (e: any) {
     console.error(
       `! Unable to generate from provided cosmwasm interface. ${e.message}\n` +
         'Please check the path of your abi path in the project.yaml'
@@ -177,32 +184,34 @@ export function prepareProtobufRenderProps(
   if (!chaintypes) {
     return [];
   }
-  return chaintypes.filter(Boolean).flatMap((chaintype) => {
-    return Object.entries(chaintype)
-      .map(([key, value]) => {
-        const filePath = path.join(projectPath, value.file);
-        if (!fs.existsSync(filePath)) {
-          throw new Error(`Error: chainType ${key}, file ${value.file} does not exist`);
-        }
-        if (!isProtoPath(value.file, projectPath)) {
-          console.error(
-            `Codegen will not apply for this file: ${value.file} Please ensure it is under the ./proto directory if you want to run codegen on it`
-          );
-        }
+  return chaintypes
+    .filter((v) => v !== undefined)
+    .flatMap((chaintype) => {
+      return Object.entries(chaintype)
+        .map(([key, value]) => {
+          const filePath = path.join(projectPath, value.file);
+          if (!fs.existsSync(filePath)) {
+            throw new Error(`Error: chainType ${key}, file ${value.file} does not exist`);
+          }
+          if (!isProtoPath(value.file, projectPath)) {
+            console.error(
+              `Codegen will not apply for this file: ${value.file} Please ensure it is under the ./proto directory if you want to run codegen on it`
+            );
+          }
 
-        // We only need to generate for RPC messages that are always prefixed with Msg
-        const messages = value.messages.filter((m: string) => m.indexOf('Msg') === 0);
-        if (!messages.length) return;
+          // We only need to generate for RPC messages that are always prefixed with Msg
+          const messages = value.messages.filter((m: string) => m.indexOf('Msg') === 0);
+          if (!messages.length) return;
 
-        return {
-          messageNames: messages,
-          namespace: pathToNamespace(value.file),
-          name: pathToName(value.file),
-          path: processProtoFilePath(value.file),
-        };
-      })
-      .filter(Boolean);
-  });
+          return {
+            messageNames: messages,
+            namespace: pathToNamespace(value.file),
+            name: pathToName(value.file),
+            path: processProtoFilePath(value.file),
+          };
+        })
+        .filter((v) => v !== undefined);
+    });
 }
 
 /**
@@ -236,11 +245,9 @@ export async function generateProto(
   projectPath: string,
   prepareDirPath: (path: string, recreate: boolean) => Promise<void>,
   renderTemplate: (templatePath: string, outputPath: string, templateData: Data) => Promise<void>,
-  upperFirst: (string?: string) => string,
-  /** @deprecated */
-  mkdirProto?: (projectPath: string) => Promise<string>
+  upperFirst: (string?: string) => string
 ): Promise<void> {
-  let tmpPath: string;
+  let tmpPath = '';
   try {
     tmpPath = await tempProtoDir(projectPath);
     const protobufRenderProps = prepareProtobufRenderProps(chaintypes, projectPath);
@@ -270,6 +277,40 @@ export async function generateProto(
     console.log('ERRROR', e);
     throw new Error(`Failed to generate from protobufs. ${e.message}, ${errorMessage}`);
   } finally {
-    fs.rmSync(tmpPath, {recursive: true, force: true});
+    if (tmpPath !== '') {
+      fs.rmSync(tmpPath, {recursive: true, force: true});
+    }
   }
+}
+
+/**
+ * Generates typescript interfaces from proto files and cosmwasm abis
+ * @param manifest
+ * @param projectPath
+ * @param prepareDirPath
+ * @param renderTemplate
+ * @param upperFirst
+ * @param datasources
+ */
+export async function projectCodegen(
+  manifest: ProjectManifestV1_0_0[],
+  projectPath: string,
+  prepareDirPath: (path: string, recreate: boolean) => Promise<void>,
+  renderTemplate: (templatePath: string, outputPath: string, templateData: Data) => Promise<void>,
+  upperFirst: (string?: string) => string,
+  datasources: CosmosRuntimeDatasource[]
+): Promise<void> {
+  const chainTypes = getChaintypes(manifest);
+  if (chainTypes.length) {
+    await generateProto(chainTypes, projectPath, prepareDirPath, renderTemplate, upperFirst);
+  }
+  await generateCosmwasm(datasources, projectPath, prepareDirPath, upperFirst, renderTemplate);
+}
+
+function getChaintypes(manifest: ProjectManifestV1_0_0[]): CosmosChainTypeDataType[] {
+  return manifest
+    .filter((m) => validateCosmosManifest(m))
+    .map((m) => (m as CosmosProjectManifestV1_0_0).network.chaintypes)
+    .filter((value) => value !== undefined)
+    .filter((value) => Object.keys(value).length !== 0);
 }

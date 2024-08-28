@@ -6,6 +6,103 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.1.1] - 2024-08-23
+### Fixed
+- Filter out transactions that can't be decoded (#280)
+
+### Changed
+- Enable strict ts setting (#282)
+- Update deps (#282)
+- Support bigint filter
+
+## [4.1.0] - 2024-08-12
+### Added
+- Support for endpoint configs (#278)
+
+## [4.0.1] - 2024-07-30
+### Fixed
+- Chain types not loading correctly (#275)
+
+## [4.0.0] - 2024-07-29
+### Changed
+- Update cosmos and subql dependencies (#270)
+- Use Subquery Project code from node core
+- Breaking change: Update to latest `@subql/node-core`, require indexing environment timezone set to UTC (#272)
+
+### Fixed
+- Fix testing service not injecting NodeConfig
+- Bump `@subql/node-core` with fixes for data consitstency issue (#274)
+- Docker images not having TZ set to UTC (#274)
+
+### Added
+- Detection of Cosmos SDK version to use correct client type (#270)
+
+## [3.12.1] - 2024-07-01
+### Fixed
+- Error creating dynamic ds if filter values are undefined (#268)
+
+## [3.12.0] - 2024-06-21
+### Added
+- Add monitor service to record block indexing actions in order to improve POI accuracy, and provide debug info for Admin api (#264)
+- The ability to specify filters when creating dynamic data sources (#265)
+
+### Changed
+- Update dependencies (#264)
+
+## [3.11.2] - 2024-06-12
+### Fixed
+- Bring back `long` to fix missing filter `codeId` in long type
+
+## [3.11.1] - 2024-05-02
+### Fixed
+- Sandbox Uint8Array and missing pg dep issue
+
+## [3.11.0] - 2024-05-02
+### Added
+- Support for KYVE integration with supporting flags (#235)
+  - `--kyve-endpoint` (default value is `https://api-us-1.kyve.network`, To disable use `false`)
+  - `--kyve-chain-id` (default value is `kyve-1`)
+  - `--kyve-storage-url` (default value is `https://arweave.net`)
+
+### Removed
+- Unused @apollo/client dependency causing version conflicts (#253)
+
+### Changed
+- Update dependencies and apply changes to match (#254)
+
+## [3.10.0] - 2024-04-10
+### Changed
+- Updated with node-core. Now dictionary supports multiple endpoints, indexer will fetch and switch dictionaries based on available blocks
+
+### Fixed
+- Updated with node-core ,also fixed:
+  - Fix modulo block didn't apply correctly with multiple dataSources
+  - Now when `workers` set to 0, it will use block dispatcher instead of throw and exit
+
+## [3.9.2] - 2024-03-15
+### Changed
+- Update `@subql/node-core` to 4.7.3 with connection retry fixes
+
+## [3.9.1] - 2024-03-14
+### Changed
+- Update `@subql/node-core` to 4.7.2 with graphql comments escaping fix
+
+## [3.9.0] - 2024-03-06
+### Changed
+- Update `@subql/node-core` to 7.4.0
+
+## [3.8.1] - 2024-03-01
+### Fixed
+- Update `@subql/node-core` to fix Poi generation issue with negative integer, also drop subscription triggers and notifiy_functions
+
+## [3.8.0] - 2024-02-23
+### Changed
+- Updates to match changes in `@subql/node-core` to 7.3.0
+
+## [3.5.1] - 2024-02-07
+### Fixed
+- Critical bug introduced in 3.5.0 which broke historical indexing
+
 ## [3.5.0] - 2024-01-25
 ### Changed
 - Update @subql/node-core with
@@ -356,7 +453,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Init release
 
-[Unreleased]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.5.0...HEAD
+[Unreleased]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.1.1...HEAD
+[4.1.1]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.1.0...node-cosmos/4.1.1
+[4.1.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.0.1...node-cosmos/4.1.0
+[4.0.1]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.0.0...node-cosmos/4.0.1
+[4.0.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.12.1...node-cosmos/4.0.0
+[3.12.1]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.12.0...node-cosmos/3.12.1
+[3.12.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.11.2...node-cosmos/3.12.0
+[3.11.2]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.11.1...node-cosmos/3.11.2
+[3.11.1]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.11.0...node-cosmos/3.11.1
+[3.11.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.10.0...node-cosmos/3.11.0
+[3.10.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.9.2...node-cosmos/3.10.0
+[3.9.2]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.9.1...node-cosmos/3.9.2
+[3.9.1]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.9.0...node-cosmos/3.9.1
+[3.9.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.8.1...node-cosmos/3.9.0
+[3.8.1]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.8.0...node-cosmos/3.8.1
+[3.8.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.5.1...node-cosmos/3.8.0
+[3.5.1]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.5.0...node-cosmos/3.5.1
 [3.5.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.4.7...node-cosmos/3.5.0
 [3.4.7]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.4.6...node-cosmos/3.4.7
 [3.4.6]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/3.4.5...node-cosmos/3.4.6

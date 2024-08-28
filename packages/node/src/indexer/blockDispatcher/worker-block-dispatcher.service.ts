@@ -1,14 +1,13 @@
-// Copyright 2020-2023 SubQuery Pte Ltd authors & contributors
+// Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
 import path from 'path';
 import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { CosmosDataSource } from '@subql/common-cosmos';
 import {
   NodeConfig,
-  SmartBatchService,
   StoreService,
-  PoiService,
   PoiSyncService,
   StoreCacheService,
   IProjectService,
@@ -17,11 +16,9 @@ import {
   IProjectUpgradeService,
   InMemoryCacheService,
   createIndexerWorker,
+  MonitorServiceInterface,
 } from '@subql/node-core';
-import {
-  CosmosProjectDs,
-  SubqueryProject,
-} from '../../configure/SubqueryProject';
+import { SubqueryProject } from '../../configure/SubqueryProject';
 import { CosmosClientConnection } from '../cosmosClient.connection';
 import { DynamicDsService } from '../dynamic-ds.service';
 import { BlockContent } from '../types';
@@ -34,16 +31,16 @@ type IndexerWorker = IIndexerWorker & {
 
 @Injectable()
 export class WorkerBlockDispatcherService
-  extends WorkerBlockDispatcher<CosmosProjectDs, IndexerWorker>
+  extends WorkerBlockDispatcher<CosmosDataSource, IndexerWorker, BlockContent>
   implements OnApplicationShutdown
 {
   constructor(
     nodeConfig: NodeConfig,
     eventEmitter: EventEmitter2,
-    @Inject('IProjectService') projectService: IProjectService<CosmosProjectDs>,
+    @Inject('IProjectService')
+    projectService: IProjectService<CosmosDataSource>,
     @Inject('IProjectUpgradeService')
     projectUpgadeService: IProjectUpgradeService,
-    smartBatchService: SmartBatchService,
     cacheService: InMemoryCacheService,
     storeService: StoreService,
     storeCacheService: StoreCacheService,
@@ -52,24 +49,23 @@ export class WorkerBlockDispatcherService
     dynamicDsService: DynamicDsService,
     unfinalizedBlocksSevice: UnfinalizedBlocksService,
     connectionPoolState: ConnectionPoolStateManager<CosmosClientConnection>,
+    monitorService?: MonitorServiceInterface,
   ) {
     super(
       nodeConfig,
       eventEmitter,
       projectService,
       projectUpgadeService,
-      smartBatchService,
       storeService,
       storeCacheService,
       poiSyncService,
       project,
-      dynamicDsService,
       () =>
         createIndexerWorker<
           IIndexerWorker,
           CosmosClientConnection,
           BlockContent,
-          CosmosProjectDs
+          CosmosDataSource
         >(
           path.resolve(__dirname, '../../../dist/indexer/worker/worker.js'),
           [],
@@ -80,13 +76,16 @@ export class WorkerBlockDispatcherService
           connectionPoolState,
           project.root,
           projectService.startHeight,
+          monitorService,
+          {
+            tempDir: project.tempDir,
+          },
         ),
+      monitorService,
     );
   }
 
-  async init(
-    onDynamicDsCreated: (height: number) => Promise<void>,
-  ): Promise<void> {
+  async init(onDynamicDsCreated: (height: number) => void): Promise<void> {
     await super.init(onDynamicDsCreated);
   }
 
@@ -95,7 +94,7 @@ export class WorkerBlockDispatcherService
     height: number,
   ): Promise<void> {
     // const start = new Date();
-    await worker.fetchBlock(height, null);
+    await worker.fetchBlock(height, 0 /* Value is not used with cosmos*/);
     // const end = new Date();
 
     // const waitTime = end.getTime() - start.getTime();

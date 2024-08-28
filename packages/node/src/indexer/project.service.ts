@@ -1,4 +1,4 @@
-// Copyright 2020-2023 SubQuery Pte Ltd authors & contributors
+// Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
 import { isMainThread } from 'node:worker_threads';
@@ -12,9 +12,11 @@ import {
   PoiSyncService,
   BaseProjectService,
   IProjectUpgradeService,
+  profiler,
 } from '@subql/node-core';
+import { CosmosDatasource } from '@subql/types-cosmos';
 import { Sequelize } from '@subql/x-sequelize';
-import { SubqueryProject, CosmosProjectDs } from '../configure/SubqueryProject';
+import { SubqueryProject } from '../configure/SubqueryProject';
 import { ApiService } from './api.service';
 import { DsProcessorService } from './ds-processor.service';
 import { DynamicDsService } from './dynamic-ds.service';
@@ -26,7 +28,7 @@ const { version: packageVersion } = require('../../package.json');
 @Injectable()
 export class ProjectService extends BaseProjectService<
   ApiService,
-  CosmosProjectDs
+  CosmosDatasource
 > {
   protected packageVersion = packageVersion;
 
@@ -39,7 +41,7 @@ export class ProjectService extends BaseProjectService<
     @Inject(isMainThread ? Sequelize : 'Null') sequelize: Sequelize,
     @Inject('ISubqueryProject') project: SubqueryProject,
     @Inject('IProjectUpgradeService')
-    protected readonly projectUpgradeService: IProjectUpgradeService<SubqueryProject>,
+    projectUpgradeService: IProjectUpgradeService<SubqueryProject>,
     @Inject(isMainThread ? StoreService : 'Null') storeService: StoreService,
     nodeConfig: NodeConfig,
     dynamicDsService: DynamicDsService,
@@ -61,6 +63,12 @@ export class ProjectService extends BaseProjectService<
       unfinalizedBlockService,
     );
   }
+
+  @profiler()
+  async init(startHeight?: number): Promise<void> {
+    return super.init(startHeight);
+  }
+
   protected async getBlockTimestamp(height: number): Promise<Date> {
     const response = await this.apiService.api.blockInfo(height);
     return new Date(toRfc3339WithNanoseconds(response.block.header.time));

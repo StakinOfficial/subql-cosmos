@@ -1,7 +1,7 @@
-// Copyright 2020-2023 SubQuery Pte Ltd authors & contributors
+// Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import {
   isBlockHandlerProcessor,
   isTransactionHandlerProcessor,
@@ -18,7 +18,8 @@ import {
   IndexerSandbox,
   ProcessBlockResponse,
   BaseIndexerManager,
-  getLogger,
+  IBlock,
+  SandboxService,
 } from '@subql/node-core';
 import {
   CosmosBlock,
@@ -28,26 +29,23 @@ import {
   CosmosCustomDatasource,
   CosmosDatasource,
 } from '@subql/types-cosmos';
-import { CosmosProjectDs } from '../configure/SubqueryProject';
 import * as CosmosUtil from '../utils/cosmos';
-import { ApiService, CosmosClient, CosmosSafeClient } from './api.service';
 import {
-  asSecondLayerHandlerProcessor_1_0_0,
-  DsProcessorService,
-} from './ds-processor.service';
+  ApiService as CosmosApiService,
+  CosmosClient,
+  CosmosSafeClient,
+} from './api.service';
+import { DsProcessorService } from './ds-processor.service';
 import { DynamicDsService } from './dynamic-ds.service';
-import { SandboxService } from './sandbox.service';
 import { BlockContent } from './types';
 import { UnfinalizedBlocksService } from './unfinalizedBlocks.service';
 
-const logger = getLogger('indexer');
-
 @Injectable()
 export class IndexerManager extends BaseIndexerManager<
-  CosmosSafeClient,
   CosmosClient,
+  CosmosSafeClient,
   BlockContent,
-  ApiService,
+  CosmosApiService,
   CosmosDatasource,
   CosmosCustomDatasource,
   typeof FilterTypeMap,
@@ -56,12 +54,11 @@ export class IndexerManager extends BaseIndexerManager<
 > {
   protected isRuntimeDs = isRuntimeCosmosDs;
   protected isCustomDs = isCustomCosmosDs;
-  protected updateCustomProcessor = asSecondLayerHandlerProcessor_1_0_0;
 
   constructor(
-    apiService: ApiService,
+    apiService: CosmosApiService,
     nodeConfig: NodeConfig,
-    sandboxService: SandboxService<CosmosSafeClient>,
+    sandboxService: SandboxService<CosmosSafeClient, CosmosClient>,
     dsProcessorService: DsProcessorService,
     dynamicDsService: DynamicDsService,
     unfinalizedBlocksService: UnfinalizedBlocksService,
@@ -78,39 +75,45 @@ export class IndexerManager extends BaseIndexerManager<
     );
   }
 
+  protected getDsProcessor(
+    ds: CosmosDatasource,
+    safeApi: CosmosSafeClient,
+  ): IndexerSandbox {
+    // SandboxService is private, this is a temp workaround
+    const sandbox = (this as any).sandboxService as SandboxService<
+      CosmosSafeClient,
+      CosmosClient
+    >;
+    return sandbox.getDsProcessor(ds, safeApi, this.apiService.unsafeApi, {
+      registry: this.apiService.registry,
+    });
+  }
+
   @profiler()
   async indexBlock(
-    block: BlockContent,
+    block: IBlock<BlockContent>,
     dataSources: CosmosDatasource[],
   ): Promise<ProcessBlockResponse> {
     return super.internalIndexBlock(block, dataSources, () =>
-      this.getApi(block),
+      this.getApi(block.block),
     );
-  }
-
-  getBlockHeight(block: BlockContent): number {
-    return block.block.block.header.height;
-  }
-
-  getBlockHash(block: BlockContent): string {
-    return block.block.block.id;
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await
   private async getApi(block: BlockContent): Promise<CosmosSafeClient> {
-    return this.apiService.getSafeApi(this.getBlockHeight(block));
+    return this.apiService.getSafeApi(block.block.header.height);
   }
 
   protected async indexBlockData(
     blockContent: BlockContent,
-    dataSources: CosmosProjectDs[],
-    getVM: (d: CosmosProjectDs) => Promise<IndexerSandbox>,
+    dataSources: CosmosDatasource[],
+    getVM: (d: CosmosDatasource) => Promise<IndexerSandbox>,
   ): Promise<void> {
     await this.indexBlockContent(blockContent, dataSources, getVM);
 
-    // for (const evt of blockContent.beginBlockEvents) {
-    //   await this.indexEvent(evt, dataSources, getVM);
-    // }
+    for (const evt of blockContent.beginBlockEvents ?? []) {
+      await this.indexEvent(evt, dataSources, getVM);
+    }
 
     for (const tx of blockContent.transactions) {
       await this.indexTransaction(tx, dataSources, getVM);
@@ -129,19 +132,19 @@ export class IndexerManager extends BaseIndexerManager<
       }
     }
 
-    // for (const evt of blockContent.endBlockEvents) {
-    //   await this.indexEvent(evt, dataSources, getVM);
-    // }
-
-    for (const evt of blockContent.finalizeBlockEvents) {
+    for (const evt of blockContent.endBlockEvents ?? []) {
       await this.indexEvent(evt, dataSources, getVM);
     }
+
+    // for (const evt of blockContent.finalizeBlockEvents) {
+    //   await this.indexEvent(evt, dataSources, getVM);
+    // }
   }
 
   private async indexBlockContent(
     block: BlockContent,
-    dataSources: CosmosProjectDs[],
-    getVM: (d: CosmosProjectDs) => Promise<IndexerSandbox>,
+    dataSources: CosmosDatasource[],
+    getVM: (d: CosmosDatasource) => Promise<IndexerSandbox>,
   ): Promise<void> {
     for (const ds of dataSources) {
       await this.indexData(CosmosHandlerKind.Block, block.block, ds, getVM);
@@ -150,8 +153,8 @@ export class IndexerManager extends BaseIndexerManager<
 
   private async indexTransaction(
     tx: CosmosTransaction,
-    dataSources: CosmosProjectDs[],
-    getVM: (d: CosmosProjectDs) => Promise<IndexerSandbox>,
+    dataSources: CosmosDatasource[],
+    getVM: (d: CosmosDatasource) => Promise<IndexerSandbox>,
   ): Promise<void> {
     for (const ds of dataSources) {
       await this.indexData(CosmosHandlerKind.Transaction, tx, ds, getVM);
@@ -160,8 +163,8 @@ export class IndexerManager extends BaseIndexerManager<
 
   private async indexMessage(
     message: CosmosMessage,
-    dataSources: CosmosProjectDs[],
-    getVM: (d: CosmosProjectDs) => Promise<IndexerSandbox>,
+    dataSources: CosmosDatasource[],
+    getVM: (d: CosmosDatasource) => Promise<IndexerSandbox>,
   ): Promise<void> {
     for (const ds of dataSources) {
       await this.indexData(CosmosHandlerKind.Message, message, ds, getVM);
@@ -170,8 +173,8 @@ export class IndexerManager extends BaseIndexerManager<
 
   private async indexEvent(
     event: CosmosEvent,
-    dataSources: CosmosProjectDs[],
-    getVM: (d: CosmosProjectDs) => Promise<IndexerSandbox>,
+    dataSources: CosmosDatasource[],
+    getVM: (d: CosmosDatasource) => Promise<IndexerSandbox>,
   ): Promise<void> {
     for (const ds of dataSources) {
       await this.indexData(CosmosHandlerKind.Event, event, ds, getVM);

@@ -1,4 +1,4 @@
-// Copyright 2020-2023 SubQuery Pte Ltd authors & contributors
+// Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
 import path from 'path';
@@ -44,11 +44,13 @@ describe('project.yaml', () => {
     const cosmosManifest = loadFromJsonOrYaml(
       path.join(projectsDir, './protoTest1', 'bad-chaintypes-project.yaml')
     ) as any;
-    expect(() => parseCosmosProjectManifest(cosmosManifest)).toThrow('failed to parse project.yaml');
+    expect(() => parseCosmosProjectManifest(cosmosManifest)).toThrow(
+      'Failed to parse project. Please see below for more information'
+    );
   });
   it('Ensure chaintypes existence on manifest deployment', () => {
     const cosmosManifest = loadFromJsonOrYaml(path.join(projectsDir, './protoTest1', 'project.yaml')) as any;
     const manifest = parseCosmosProjectManifest(cosmosManifest);
-    expect(manifest.asImpl.network.chaintypes.size).toBeGreaterThan(0);
+    expect(manifest.asImpl.network.chaintypes?.size).toBeGreaterThan(0);
   });
 });

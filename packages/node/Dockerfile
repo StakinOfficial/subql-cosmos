@@ -1,6 +1,5 @@
 # Build stage
 FROM node:18-alpine as builder
-
 # Set working directory
 WORKDIR /app
 
@@ -23,7 +22,9 @@ FROM node:18-alpine
 COPY --from=builder /app/packages/node/app.tgz /app.tgz
 
 # Install production dependencies
-RUN apk add --no-cache tini curl git
+RUN apk add --no-cache tini curl git &&  \
+    apk add --no-cache python3 make g++ &&  \
+    npm install -g node-gyp
 
 # Install the app
 RUN npm i -g app.tgz
@@ -32,6 +33,14 @@ RUN npm i -g app.tgz
 RUN rm /app.tgz && \
     yarn cache clean && \
     rm -rf /root/.npm /root/.cache
+
+# Create ./.monitor directory and set permissions
+RUN mkdir -p .monitor && \
+    chown 1000:1000 .monitor
+
+# Make the user not ROOT
+USER 1000
+ENV TZ=utc
 
 # Set Entry point and command
 ENTRYPOINT ["/sbin/tini", "--", "/usr/local/lib/node_modules/@subql/node-cosmos/bin/run"]
