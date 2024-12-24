@@ -6,6 +6,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.3.0] - 2024-12-17
+### Changed
+- Update `@subql/node-core` and `@subql/common` dependencies
+
+## [4.2.1] - 2024-12-06
+### Fixed
+- Missing API dependency when using reindex
+
+## [4.2.0] - 2024-11-27
+### Added
+- Support for historical indexing by timestamp as well as block height
+- Add an `--enable-cache` flag, allowing you to choose between DB or cache for IO operations.
+
+## [4.1.4] - 2024-10-23
+### Changed
+- Bump `@subql/common` dependency
+
+## [4.1.3] - 2024-10-22
+### Changed
+- Use tendermint-rpc fork to allow support for finalizeBlockEvents (#291)
+- Bump `@subql/common` and `@subql/node-core` dependency (#292)
+
+## [4.1.2] - 2024-09-25
+### Fixed
+- Kyve dependency with breaking change (#285)
+- Bump node-core, fix cron filter issue (#284)
+
 ## [4.1.1] - 2024-08-23
 ### Fixed
 - Filter out transactions that can't be decoded (#280)
@@ -453,7 +480,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Init release
 
-[Unreleased]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.1.1...HEAD
+[Unreleased]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.3.0...HEAD
+[4.3.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.2.1...node-cosmos/4.3.0
+[4.2.1]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.2.0...node-cosmos/4.2.1
+[4.2.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.1.4...node-cosmos/4.2.0
+[4.1.4]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.1.3...node-cosmos/4.1.4
+[4.1.3]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.1.2...node-cosmos/4.1.3
+[4.1.2]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.1.1...node-cosmos/4.1.2
 [4.1.1]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.1.0...node-cosmos/4.1.1
 [4.1.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.0.1...node-cosmos/4.1.0
 [4.0.1]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.0.0...node-cosmos/4.0.1

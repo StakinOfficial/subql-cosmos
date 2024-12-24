@@ -6,6 +6,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.1.0] - 2024-12-17
+### Changed
+- Update `@subql/common` dependency
+
+## [5.0.6] - 2024-11-27
+### Changed
+- Bump `@subql/common` dependency
+
+## [5.0.5] - 2024-10-23
+### Changed
+- Bump `@subql/common` dependency
+
+## [5.0.4] - 2024-10-22
+### Changed
+- Bump `@subql/common` dependency (#292)
+
 ## [5.0.3] - 2024-08-23
 ### Changed
 - Update deps (#282)
@@ -158,7 +174,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix chainTypes not being in deployments
 
 ## [0.0.5] - 2022-06-15
-[Unreleased]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/5.0.3...HEAD
+[Unreleased]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/5.1.0...HEAD
+[5.1.0]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/5.0.6...common-cosmos/5.1.0
+[5.0.6]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/5.0.5...common-cosmos/5.0.6
+[5.0.5]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/5.0.4...common-cosmos/5.0.5
+[5.0.4]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/5.0.3...common-cosmos/5.0.4
 [5.0.3]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/5.0.2...common-cosmos/5.0.3
 [5.0.2]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/5.0.1...common-cosmos/5.0.2
 [5.0.1]: https://github.com/subquery/subql-cosmos/compare/common-cosmos/5.0.0...common-cosmos/5.0.1

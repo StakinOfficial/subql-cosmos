@@ -2,16 +2,20 @@
 // SPDX-License-Identifier: GPL-3.0
 
 import { Module } from '@nestjs/common';
-import { EventEmitterModule } from '@nestjs/event-emitter';
+import { EventEmitter2, EventEmitterModule } from '@nestjs/event-emitter';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import {
   DbModule,
   ForceCleanService,
   ReindexService,
-  StoreCacheService,
   StoreService,
   PoiService,
+  storeModelFactory,
+  NodeConfig,
+  ConnectionPoolStateManager,
+  ConnectionPoolService,
 } from '@subql/node-core';
+import { Sequelize } from '@subql/x-sequelize';
 import { ConfigureModule } from '../configure/configure.module';
 import { ApiService } from '../indexer/api.service';
 import { DsProcessorService } from '../indexer/ds-processor.service';
@@ -20,7 +24,11 @@ import { UnfinalizedBlocksService } from '../indexer/unfinalizedBlocks.service';
 
 @Module({
   providers: [
-    StoreCacheService,
+    {
+      provide: 'IStoreModelProvider',
+      useFactory: storeModelFactory,
+      inject: [NodeConfig, EventEmitter2, SchedulerRegistry, Sequelize],
+    },
     StoreService,
     ReindexService,
     PoiService,
@@ -34,10 +42,17 @@ import { UnfinalizedBlocksService } from '../indexer/unfinalizedBlocks.service';
       useClass: DynamicDsService,
     },
     DsProcessorService,
+    ConnectionPoolStateManager,
+    ConnectionPoolService,
     {
-      // Used to work with DI for unfinalizedBlocksService but not used with reindex
       provide: ApiService,
-      useFactory: () => undefined,
+      useFactory: ApiService.create.bind(ApiService),
+      inject: [
+        'ISubqueryProject',
+        ConnectionPoolService,
+        EventEmitter2,
+        NodeConfig,
+      ],
     },
     SchedulerRegistry,
   ],
