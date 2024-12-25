@@ -11,7 +11,8 @@
     "start": "nest start",
     "start:dev": "TZ=utc nodemon",
     "start:prod": "TZ=utc node dist/main",
-    "changelog:release": "echo \"Updating changelog $npm_package_version\" && npx chan release $npm_package_version --git-url \"https://github.com/subquery/subql-cosmos\" --release-prefix=\"node-cosmos/\""
+    "changelog:release": "echo \"Updating changelog $npm_package_version\" && npx chan release $npm_package_version --git-url \"https://github.com/subquery/subql-cosmos\" --release-prefix=\"node-cosmos/\"",
+    "postinstall": "patch-package"
   },
   "homepage": "https://github.com/subquery/subql-cosmos",
   "repository": "github:subquery/subql-cosmos",
@@ -34,6 +35,7 @@
     "@subql/node-core": "^16.1.0",
     "@subql/types-cosmos": "workspace:*",
     "lodash": "^4.17.21",
+    "patch-package": "^8.0.0",
     "protobufjs": "^6.11.4",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
@@ -54,8 +56,12 @@
   "peerDependencies": {
     "@subql/utils": "*"
   },
+  "resolutions": {
+    "@cosmjs/tendermint-rpc": "npm:@subql/x-cosmos-tendermint-rpc@0.32.4"
+  },
   "files": [
     "/dist",
-    "/bin"
+    "/bin",
+    "/patches"
   ]
 }

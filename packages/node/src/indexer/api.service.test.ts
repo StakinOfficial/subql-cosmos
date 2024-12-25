@@ -119,6 +119,15 @@ describe('ApiService', () => {
       expect(rpcFetchSpy).toHaveBeenCalledTimes(1);
     });
 
+    it('query saga block results', async () => {
+      await prepareApiService('http://34.30.181.117', 'ssc-1', tmpPath);
+
+      const api = apiService.api;
+      const blockResults = await api.blockResults(3855628);
+
+      expect(blockResults.height).toEqual(3855628);
+    });
+
     it.skip('query block info', async () => {
       await prepareApiService(ENDPOINT, CHAINID, tmpPath);
 

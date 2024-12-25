@@ -2350,23 +2350,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@cosmjs/json-rpc@npm:0.32.4, @cosmjs/json-rpc@npm:^0.32.4":
+"@cosmjs/json-rpc@npm:0.32.4":
   version: 0.32.4
   resolution: "@cosmjs/json-rpc@npm:0.32.4"
   dependencies:
     "@cosmjs/stream": ^0.32.4
     xstream: ^11.14.0
   checksum: 5153d7fbccd7073679d138e351fe02395602346717d34d8bdd761797afa71bc395e82bc6cec797ffdc13aceeab8f508c75a9dd6b15314c1cb8a9757239978d62
-  languageName: node
-  linkType: hard
-
-"@cosmjs/json-rpc@npm:^0.32.3":
-  version: 0.32.3
-  resolution: "@cosmjs/json-rpc@npm:0.32.3"
-  dependencies:
-    "@cosmjs/stream": ^0.32.3
-    xstream: ^11.14.0
-  checksum: fc574f8863e7696fa07be162e6cbdfe51d720a0a8b433441152f4f6983596c7acf1f2461d58048e35306221228e2a6199b095d9bd2ee7c8c3ab27b592e3a267a
   languageName: node
   linkType: hard
 
@@ -2416,7 +2406,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@cosmjs/socket@npm:0.32.4, @cosmjs/socket@npm:^0.32.4":
+"@cosmjs/socket@npm:0.32.4":
   version: 0.32.4
   resolution: "@cosmjs/socket@npm:0.32.4"
   dependencies:
@@ -2425,18 +2415,6 @@ __metadata:
     ws: ^7
     xstream: ^11.14.0
   checksum: 26125bbf261d5d77bec3c5340a9c60c1e512bee747984b3333521491aa4f4d2a3e2cba7f1e412013b38835eff875066e645d86f752d7936f19f9eae18b9d97e5
-  languageName: node
-  linkType: hard
-
-"@cosmjs/socket@npm:^0.32.3":
-  version: 0.32.3
-  resolution: "@cosmjs/socket@npm:0.32.3"
-  dependencies:
-    "@cosmjs/stream": ^0.32.3
-    isomorphic-ws: ^4.0.1
-    ws: ^7
-    xstream: ^11.14.0
-  checksum: 9e695a21b81c7987999c1452f18a341428ad01cda65b392386440d26589c2b53af81954c36156c5be88ddd97982c20db2fb938b4349a04f18f05b65547796556
   languageName: node
   linkType: hard
 
@@ -2509,42 +2487,6 @@ __metadata:
     readonly-date: ^1.0.0
     xstream: ^11.14.0
   checksum: f98853e8a38690921adef946cf6bfd35a6ed9906c353700a24a85631c387961d7a2ad93b437a4c95d56d4452b50161075814fc353bd72a29f85bae154c6ff4f7
-  languageName: node
-  linkType: hard
-
-"@cosmjs/tendermint-rpc@npm:^0.32.3":
-  version: 0.32.3
-  resolution: "@cosmjs/tendermint-rpc@npm:0.32.3"
-  dependencies:
-    "@cosmjs/crypto": ^0.32.3
-    "@cosmjs/encoding": ^0.32.3
-    "@cosmjs/json-rpc": ^0.32.3
-    "@cosmjs/math": ^0.32.3
-    "@cosmjs/socket": ^0.32.3
-    "@cosmjs/stream": ^0.32.3
-    "@cosmjs/utils": ^0.32.3
-    axios: ^1.6.0
-    readonly-date: ^1.0.0
-    xstream: ^11.14.0
-  checksum: 713de7de1df68d86f5cc2638236dcd3c7aea4ca6b33c94fa974f7d9d6e11298c0dec62443b4243df6d411c765b61c31f8dc64aee92b75e5aaaffd47404fb14db
-  languageName: node
-  linkType: hard
-
-"@cosmjs/tendermint-rpc@npm:^0.32.4":
-  version: 0.32.4
-  resolution: "@cosmjs/tendermint-rpc@npm:0.32.4"
-  dependencies:
-    "@cosmjs/crypto": ^0.32.4
-    "@cosmjs/encoding": ^0.32.4
-    "@cosmjs/json-rpc": ^0.32.4
-    "@cosmjs/math": ^0.32.4
-    "@cosmjs/socket": ^0.32.4
-    "@cosmjs/stream": ^0.32.4
-    "@cosmjs/utils": ^0.32.4
-    axios: ^1.6.0
-    readonly-date: ^1.0.0
-    xstream: ^11.14.0
-  checksum: 284e5ed3edd359f70fde36d64357e5b11b8d07d29dc087cc2121f90fbdb2c152a8927abbfa9e9a40d7713d48789ce46672e2e076dba4813c2a9a47ed1f0206a9
   languageName: node
   linkType: hard
 
@@ -4295,6 +4237,7 @@ __metadata:
     dotenv: ^15.0.1
     lodash: ^4.17.21
     nodemon: ^2.0.15
+    patch-package: ^8.0.0
     protobufjs: ^6.11.4
     reflect-metadata: ^0.1.13
     rimraf: ^3.0.2

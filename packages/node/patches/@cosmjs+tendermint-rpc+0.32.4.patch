@@ -1,0 +1,13 @@
+diff --git a/node_modules/@cosmjs/tendermint-rpc/build/comet38/adaptor/responses.js b/node_modules/@cosmjs/tendermint-rpc/build/comet38/adaptor/responses.js
+index c458498..3c5732d 100644
+--- a/node_modules/@cosmjs/tendermint-rpc/build/comet38/adaptor/responses.js
++++ b/node_modules/@cosmjs/tendermint-rpc/build/comet38/adaptor/responses.js
+@@ -132,7 +132,7 @@ function decodeBlockResults(data) {
+         height: (0, inthelpers_1.apiToSmallInt)((0, encodings_1.assertNotEmpty)(data.height)),
+         results: (data.txs_results || []).map(decodeTxData),
+         validatorUpdates: (data.validator_updates || []).map(decodeValidatorUpdate),
+-        consensusUpdates: (0, encodings_1.may)(decodeConsensusParams, data.consensus_param_updates),
++        consensusUpdates: (0, encodings_1.may)(decodeConsensusParams, data.consensus_param_updates?.data?data.consensus_param_updates:null),
+         finalizeBlockEvents: decodeEvents(data.finalize_block_events || [])
+     };
+ }

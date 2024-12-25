@@ -1,5 +1,5 @@
 # Build stage
-FROM node:18-alpine as builder
+FROM node:18-alpine AS builder
 # Set working directory
 WORKDIR /app
 
@@ -28,6 +28,9 @@ RUN apk add --no-cache tini curl git &&  \
 
 # Install the app
 RUN npm i -g app.tgz
+
+# Patch pacakge
+RUN cd $(npm root -g)/@subql/node-cosmos && npx patch-package
 
 # Clean up unused deps
 RUN rm /app.tgz && \
