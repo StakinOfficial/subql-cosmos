@@ -1,55 +1,32 @@
-// Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
+// // Copyright 2020-2025 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
 import { Module } from '@nestjs/common';
-import { EventEmitter2, EventEmitterModule } from '@nestjs/event-emitter';
-import { ScheduleModule, SchedulerRegistry } from '@nestjs/schedule';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   ConnectionPoolService,
-  ConnectionPoolStateManager,
-  DbModule,
-  InMemoryCacheService,
   NodeConfig,
-  PoiService,
-  PoiSyncService,
-  StoreService,
   TestRunner,
-  SandboxService,
-  storeModelFactory,
+  TestingCoreModule,
+  ProjectService,
+  UnfinalizedBlocksService,
+  DsProcessorService,
+  DynamicDsService,
+  MultiChainRewindService,
 } from '@subql/node-core';
-import { Sequelize } from '@subql/x-sequelize';
-import { ConfigureModule } from '../configure/configure.module';
+import { BlockchainService } from '../blockchain.service';
 import { ApiService } from '../indexer/api.service';
-import { DsProcessorService } from '../indexer/ds-processor.service';
-import { DynamicDsService } from '../indexer/dynamic-ds.service';
 import { IndexerManager } from '../indexer/indexer.manager';
-import { ProjectService } from '../indexer/project.service';
-import { UnfinalizedBlocksService } from '../indexer/unfinalizedBlocks.service';
 
 @Module({
+  imports: [TestingCoreModule],
   providers: [
-    InMemoryCacheService,
-    StoreService,
-    {
-      provide: 'IStoreModelProvider',
-      useFactory: storeModelFactory,
-      inject: [NodeConfig, EventEmitter2, SchedulerRegistry, Sequelize],
-    },
-    EventEmitter2,
-    PoiService,
-    PoiSyncService,
-    SandboxService,
-    DsProcessorService,
-    DynamicDsService,
-    UnfinalizedBlocksService,
-    ConnectionPoolStateManager,
-    ConnectionPoolService,
     {
       provide: 'IProjectService',
       useClass: ProjectService,
     },
     {
-      provide: ApiService,
+      provide: 'APIService',
       useFactory: ApiService.create.bind(ApiService),
       inject: [
         'ISubqueryProject',
@@ -58,30 +35,24 @@ import { UnfinalizedBlocksService } from '../indexer/unfinalizedBlocks.service';
         NodeConfig,
       ],
     },
-    SchedulerRegistry,
-    TestRunner,
     {
-      provide: 'IApi',
-      useExisting: ApiService,
+      provide: 'IUnfinalizedBlocksService',
+      useClass: UnfinalizedBlocksService,
     },
+    {
+      provide: 'IBlockchainService',
+      useClass: BlockchainService,
+    },
+    TestRunner,
     {
       provide: 'IIndexerManager',
       useClass: IndexerManager,
     },
+    DsProcessorService,
+    DynamicDsService,
+    MultiChainRewindService,
   ],
 
   controllers: [],
 })
 export class TestingFeatureModule {}
-
-@Module({
-  imports: [
-    DbModule.forRoot(),
-    ConfigureModule.register(),
-    EventEmitterModule.forRoot(),
-    ScheduleModule.forRoot(),
-    TestingFeatureModule,
-  ],
-  controllers: [],
-})
-export class TestingModule {}

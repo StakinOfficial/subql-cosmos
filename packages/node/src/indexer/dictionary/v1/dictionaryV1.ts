@@ -1,4 +1,4 @@
-// Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
+// // Copyright 2020-2025 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
 import assert from 'assert';
@@ -8,7 +8,11 @@ import {
   isCustomCosmosDs,
   isRuntimeCosmosDs,
 } from '@subql/common-cosmos';
-import { NodeConfig, DictionaryV1 as BaseDictionaryV1 } from '@subql/node-core';
+import {
+  NodeConfig,
+  DictionaryV1 as BaseDictionaryV1,
+  DsProcessorService,
+} from '@subql/node-core';
 import {
   DictionaryQueryEntry,
   DictionaryQueryCondition,
@@ -27,7 +31,6 @@ import {
 import { setWith, sortBy, uniqBy } from 'lodash';
 import { SubqueryProject } from '../../../configure/SubqueryProject';
 import { isBaseHandler, isCustomHandler } from '../../../utils/project';
-import { DsProcessorService } from '../../ds-processor.service';
 
 type GetDsProcessor = DsProcessorService['getDsProcessor'];
 

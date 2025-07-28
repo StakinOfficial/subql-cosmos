@@ -1,4 +1,4 @@
-// Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
+// // Copyright 2020-2025 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
 import { GeneratedType, Registry, DecodedTxRaw } from '@cosmjs/proto-signing';
@@ -29,7 +29,7 @@ import {
   wrapEvent,
 } from './cosmos';
 
-const ENDPOINT = 'https://rpc.mainnet.archway.io';
+const ENDPOINT = 'https://rpc-1.archway.nodes.guru';
 
 const TEST_BLOCKNUMBER = 4_136_542; //https://www.mintscan.io/archway/block/4136542?chainId=archway-1
 
@@ -82,6 +82,15 @@ const TEST_MESSAGE_FILTER_FALSE_2: CosmosMessageFilter = {
   type: '/cosmwasm.wasm.v1.MsgStoreCode',
 };
 
+const wasmTypes: ReadonlyArray<[string, GeneratedType]> = [
+  ['/cosmwasm.wasm.v1.MsgClearAdmin', MsgClearAdmin],
+  ['/cosmwasm.wasm.v1.MsgExecuteContract', MsgExecuteContract],
+  ['/cosmwasm.wasm.v1.MsgMigrateContract', MsgMigrateContract],
+  ['/cosmwasm.wasm.v1.MsgStoreCode', MsgStoreCode],
+  ['/cosmwasm.wasm.v1.MsgInstantiateContract', MsgInstantiateContract],
+  ['/cosmwasm.wasm.v1.MsgUpdateAdmin', MsgUpdateAdmin],
+];
+
 jest.setTimeout(200000);
 describe('CosmosUtils', () => {
   let api: CosmosClient;
@@ -91,15 +100,6 @@ describe('CosmosUtils', () => {
 
   beforeAll(async () => {
     const tendermint = await connectComet(ENDPOINT);
-    const wasmTypes: ReadonlyArray<[string, GeneratedType]> = [
-      ['/cosmwasm.wasm.v1.MsgClearAdmin', MsgClearAdmin],
-      ['/cosmwasm.wasm.v1.MsgExecuteContract', MsgExecuteContract],
-      ['/cosmwasm.wasm.v1.MsgMigrateContract', MsgMigrateContract],
-      ['/cosmwasm.wasm.v1.MsgStoreCode', MsgStoreCode],
-      ['/cosmwasm.wasm.v1.MsgInstantiateContract', MsgInstantiateContract],
-      ['/cosmwasm.wasm.v1.MsgUpdateAdmin', MsgUpdateAdmin],
-    ];
-
     const registry = new Registry([...defaultRegistryTypes, ...wasmTypes]);
     api = new CosmosClient(tendermint, registry);
 
@@ -109,7 +109,7 @@ describe('CosmosUtils', () => {
   });
 
   afterAll(() => {
-    api.disconnect();
+    api?.disconnect();
   });
 
   describe('Parsing block data', () => {
@@ -121,11 +121,11 @@ describe('CosmosUtils', () => {
       expect(event.idx).toEqual(17);
 
       expect(event.msg).toBeDefined();
-      expect(event.msg.msg.typeUrl).toEqual(
+      expect(event.msg?.msg.typeUrl).toEqual(
         '/cosmwasm.wasm.v1.MsgExecuteContract',
       );
 
-      expect(event.msg.tx.hash).toEqual(event.tx.hash);
+      expect(event.msg?.tx.hash).toEqual(event.tx.hash);
 
       expect(event.event).toBeDefined();
       expect(event.event.type).toEqual(
@@ -357,19 +357,11 @@ describe('Cosmos 0.50 support', () => {
 
   beforeAll(async () => {
     client = await connectComet('https://rpc.neutron.quokkastake.io');
-    const wasmTypes: ReadonlyArray<[string, GeneratedType]> = [
-      ['/cosmwasm.wasm.v1.MsgClearAdmin', MsgClearAdmin],
-      ['/cosmwasm.wasm.v1.MsgExecuteContract', MsgExecuteContract],
-      ['/cosmwasm.wasm.v1.MsgMigrateContract', MsgMigrateContract],
-      ['/cosmwasm.wasm.v1.MsgStoreCode', MsgStoreCode],
-      ['/cosmwasm.wasm.v1.MsgInstantiateContract', MsgInstantiateContract],
-      ['/cosmwasm.wasm.v1.MsgUpdateAdmin', MsgUpdateAdmin],
-    ];
 
     const registry = new Registry([...defaultRegistryTypes, ...wasmTypes]);
     api = new CosmosClient(client, registry);
 
-    const [firstBlock] = await fetchBlocksBatches(api, [12_495_419]); // https://www.mintscan.io/neutron/block/12495419
+    const [firstBlock] = await fetchBlocksBatches(api, [19_091_812]); // https://www.mintscan.io/neutron/block/12495419
     block = firstBlock.block;
   });
 
@@ -387,23 +379,51 @@ describe('Cosmos 0.50 support', () => {
   });
 
   it('correctly parses events', () => {
+    // Failed tx event
     const event = block.events[0];
     expect(event.block).toBeDefined();
     expect(event.tx).toBeDefined();
-    expect(event.idx).toEqual(0);
+    expect(event.idx).toEqual(16);
 
-    expect(event.msg).toBeDefined();
-    expect(event.msg.msg.typeUrl).toEqual(
+    // Failed tx
+    const event2 = block.events[27];
+    expect(event2.block).toBeDefined();
+    expect(event2.tx).toBeDefined();
+    expect(event2.idx).toEqual(43);
+
+    expect(event2.msg).toBeDefined();
+    expect(event2.msg?.msg.typeUrl).toEqual(
       '/ibc.core.client.v1.MsgUpdateClient',
     );
 
-    expect(event.msg.tx.hash).toEqual(event.tx.hash);
+    expect(event2.msg?.tx.hash).toEqual(event2.tx.hash);
 
-    expect(event.event).toBeDefined();
-    expect(event.event.type).toEqual('message');
-    expect(event.event.attributes.length).toEqual(3);
+    expect(event2.event).toBeDefined();
+    expect(event2.event.type).toEqual('message');
+    expect(event2.event.attributes.length).toEqual(3);
 
-    expect(event.log.events.length).toEqual(0);
+    expect(event2.log.events.length).toEqual(0);
+  });
+
+  it('Correctly wraps events not associated to a message', async () => {
+    const [{ block }] = await fetchBlocksBatches(api, [19_091_812]);
+
+    expect(block.events.length).toBe(287);
+
+    expect(block.transactions[0].tx.events.length).toBe(21);
+
+    const txEvents = block.events.filter(
+      (evt) =>
+        evt.tx.hash ===
+        '5F5DC2EECF1D8EDDE07BC0AD4F91A48BEB35E2A0D813BD2D21EA90B85F0BAB95',
+    );
+    expect(txEvents.length).toBe(21);
+    const nonMessageTxs = txEvents.filter((evt) => evt.msg === undefined);
+    expect(nonMessageTxs.length).toBe(16);
+  });
+
+  it('Can stringify a block', () => {
+    expect(() => JSON.stringify(block.block)).not.toThrow();
   });
 
   // block.tx when block.block.tx cannot be decoded
@@ -454,14 +474,6 @@ describe('Cosmos bigint support', () => {
     // chainId: fetchhub-4
     // endpoint: https://rpc-fetchhub.fetch.ai
     client = await connectComet('https://rpc-fetchhub.fetch.ai');
-    const wasmTypes: ReadonlyArray<[string, GeneratedType]> = [
-      ['/cosmwasm.wasm.v1.MsgClearAdmin', MsgClearAdmin],
-      ['/cosmwasm.wasm.v1.MsgExecuteContract', MsgExecuteContract],
-      ['/cosmwasm.wasm.v1.MsgMigrateContract', MsgMigrateContract],
-      ['/cosmwasm.wasm.v1.MsgStoreCode', MsgStoreCode],
-      ['/cosmwasm.wasm.v1.MsgInstantiateContract', MsgInstantiateContract],
-      ['/cosmwasm.wasm.v1.MsgUpdateAdmin', MsgUpdateAdmin],
-    ];
 
     const registry = new Registry([...defaultRegistryTypes, ...wasmTypes]);
     api = new CosmosClient(client, registry);
@@ -478,5 +490,68 @@ describe('Cosmos bigint support', () => {
 
     expect(succEvents.length).toEqual(1);
     expect(failEvents.length).toEqual(0);
+  });
+});
+
+describe('Failed transaction events', () => {
+  let api: CosmosClient;
+  let client: CometClient;
+  let block: BlockContent;
+
+  beforeAll(async () => {
+    // chainId: fetchhub-4
+    // endpoint: https://rpc-fetchhub.fetch.ai
+    client = await connectComet(
+      'https://shannon-testnet-grove-rpc.beta.poktroll.com',
+    );
+
+    const registry = new Registry([...defaultRegistryTypes, ...wasmTypes]);
+    api = new CosmosClient(client, registry);
+
+    const [firstBlock] = await fetchBlocksBatches(api, [348]);
+    block = firstBlock.block;
+  });
+
+  it('The block includes events from failed transactions', () => {
+    const failedTx =
+      '07DFC25C9387BEA3928A2F2DF465E2EC93246456498366FCADB953B6A706B96B';
+
+    const tx = block.transactions.find((tx) => tx.hash === failedTx);
+    expect(tx).toBeDefined();
+
+    const evts = block.events.filter((evt) => evt.tx.hash === failedTx);
+    expect(evts.length).toBeGreaterThan(0);
+    expect(evts.length).toEqual(tx!.tx.events.length);
+  });
+});
+
+describe('Celestia support', () => {
+  let api: CosmosClient;
+
+  beforeAll(async () => {
+    const tendermint = await connectComet(
+      'https://celestia-rpc.publicnode.com:443',
+    );
+    const registry = new Registry([...defaultRegistryTypes, ...wasmTypes]);
+    api = new CosmosClient(tendermint, registry);
+  });
+
+  it('can decode a transaction', async () => {
+    const height = await api.getHeight();
+
+    // Go back 100 blocks to ensure the node has the block, we just want a recent block because of pruning
+    const blockHeight = height - 100;
+
+    const [block] = await fetchBlocksBatches(api, [blockHeight]);
+
+    // TODO blocks might not have transactions
+    expect(block.block.transactions.length).toBeGreaterThan(0);
+
+    const tx = block.block.transactions[0];
+
+    // This is a getter function so wrap it in a function to try and catch the error
+    expect(() => tx.decodedTx).not.toThrow();
+
+    expect(tx.hash).toBeDefined();
   });
 });

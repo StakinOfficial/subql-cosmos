@@ -1,4 +1,4 @@
-// Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
+// // Copyright 2020-2025 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
 import assert from 'assert';
@@ -29,12 +29,13 @@ import {
   CosmosMessageFilter,
   CosmosBlock,
   CosmosEvent,
+  CosmosEventKind,
   CosmosTransaction,
   CosmosMessage,
   CosmosBlockFilter,
   CosmosTxFilter,
 } from '@subql/types-cosmos';
-import { isObjectLike } from 'lodash';
+import { isObjectLike, omit } from 'lodash';
 import { isLong } from 'long';
 import { SubqlProjectBlockFilter } from '../configure/SubqueryProject';
 import { CosmosClient } from '../indexer/api.service';
@@ -43,6 +44,7 @@ import {
   BlockResponse,
   BlockResultsResponse,
 } from '../indexer/types';
+import { decodeCelestiaTx, unwrapCelestiaTx } from './celestia';
 
 const logger = getLogger('fetch');
 
@@ -264,15 +266,6 @@ export async function fetchCosmosBlocksArray(
   );
 }
 
-export function wrapBlock(block: BlockResponse, txs: TxData[]): CosmosBlock {
-  return {
-    blockId: block.blockId,
-    block: { id: toHex(block.blockId.hash).toUpperCase(), ...block.block },
-    header: block.block.header,
-    txs: txs,
-  };
-}
-
 export function wrapTx(
   block: CosmosBlock,
   txResults: TxData[],
@@ -283,18 +276,43 @@ export function wrapTx(
         idx,
         block: block,
         tx,
-        hash: toHex(sha256(block.block.txs[idx])).toUpperCase(),
+        get hash() {
+          delete (this as any).hash;
+          let txRaw = block.block.txs[idx];
+
+          // Celestia tx's are wrapped in an outer object so it needs to be unwrapped
+          // This doesn't throw for other networks so we need to explicitly check for Celestia networks
+          // Networks are listed here https://docs.celestia.org/how-to-guides/participate
+          if (
+            ['celestia', 'mocha-4', 'arabica-11', 'mamo-1'].includes(
+              block.header.chainId,
+            )
+          ) {
+            try {
+              txRaw = unwrapCelestiaTx(block.block.txs[idx]);
+            } catch (e) {
+              // Do nothing, the original txRaw will be used
+            }
+          }
+
+          return ((this as any).hash = toHex(sha256(txRaw)).toUpperCase());
+        },
         get decodedTx() {
           delete (this as any).decodedTx;
+          const txRaw = block.block.txs[idx];
           try {
-            return ((this.decodedTx as any) = decodeTxRaw(
-              block.block.txs[idx],
-            ));
+            return ((this as any).decodedTx = decodeTxRaw(txRaw));
           } catch (e) {
-            throw new Error(
-              `Failed to decode transaction idx="${idx}" at height="${block.block.header.height}"`,
-              { cause: e },
-            );
+            try {
+              return ((this as any).decodedTx = decodeCelestiaTx(txRaw));
+            } catch (e) {
+              throw new Error(
+                `Failed to decode transaction idx="${idx}" at height="${block.block.header.height}"`,
+                {
+                  cause: e,
+                },
+              );
+            }
           }
         },
       }))
@@ -366,6 +384,7 @@ export function wrapBlockBeginAndEndEvents(
   block: CosmosBlock,
   events: TxEvent[],
   idxOffset: number,
+  kind: CosmosEventKind,
 ): CosmosEvent[] {
   return events.map(
     (event) =>
@@ -376,6 +395,7 @@ export function wrapBlockBeginAndEndEvents(
         msg: null,
         tx: null,
         log: null,
+        kind,
       } as unknown as CosmosEvent),
   );
 }
@@ -395,7 +415,12 @@ export function wrapEvent(
 ): CosmosEvent[] {
   const events: CosmosEvent[] = [];
   for (const tx of txs) {
-    const appendEvent = (msg: CosmosMessage, event: TxEvent, log: Log) => {
+    const appendEvent = (
+      msg: CosmosMessage | undefined,
+      event: TxEvent,
+      log: Log,
+      kind: CosmosEventKind,
+    ) => {
       events.push({
         idx: idxOffset++,
         block,
@@ -403,6 +428,7 @@ export function wrapEvent(
         msg,
         event,
         log,
+        kind,
       });
     };
 
@@ -410,9 +436,37 @@ export function wrapEvent(
      * Is there a better way of doing this?
      * 34,37 also provide tx.tx.events, but logs don't seem to be recoverable that way.
      * Are logs even of use? They are just a subset of event attributes */
+
+    const processTxEvents = () => {
+      if (tx.tx?.events) {
+        // Comet38
+        for (const txEvent of tx.tx.events) {
+          let msg: CosmosMessage | undefined;
+          const eventMsgIndex = txEvent.attributes.find(
+            (attr) => attrToString(attr.key) === 'msg_index',
+          )?.value;
+
+          // Event doesn't have a message
+          if (eventMsgIndex !== undefined) {
+            const msgNumber = parseInt(attrToString(eventMsgIndex), 10);
+            msg = wrapCosmosMsg(block, tx, msgNumber, registry);
+          }
+
+          // TODO does a log still exist in Comet38?
+          appendEvent(
+            msg,
+            txEvent,
+            { events: [], log: '', msg_index: -1 },
+            msg ? CosmosEventKind.Message : CosmosEventKind.Transaction,
+          );
+        }
+      }
+    };
+
     if (tx.tx?.log) {
       // Tendermint34, Tendermint37
-      let logs: Log[];
+      let logs: Log[] = [];
+
       try {
         logs = parseRawLog(tx.tx.log) as Log[];
       } catch (e) {
@@ -420,7 +474,7 @@ export function wrapEvent(
         logger.debug(
           'Failed to parse raw log, most likely a failed transaction',
         );
-        continue;
+        processTxEvents();
       }
       for (const log of logs) {
         let msg: CosmosMessage;
@@ -434,34 +488,11 @@ export function wrapEvent(
           continue;
         }
         for (let i = 0; i < log.events.length; i++) {
-          appendEvent(msg, log.events[i], log);
+          appendEvent(msg, log.events[i], log, CosmosEventKind.Message);
         }
-      }
-    } else if (tx.tx?.events) {
-      // Comet38
-      for (const txEvent of tx.tx.events) {
-        let msg: CosmosMessage;
-        try {
-          const eventMsgIndex = txEvent.attributes.find(
-            (attr) => attrToString(attr.key) === 'msg_index',
-          )?.value;
-
-          // Event doesn't have a message
-          if (eventMsgIndex === undefined) {
-            continue;
-          }
-
-          const msgNumber = parseInt(attrToString(eventMsgIndex), 10);
-          msg = wrapCosmosMsg(block, tx, msgNumber, registry);
-        } catch (e) {
-          logger.warn(`Unable to find message for event. tx=${tx.hash}`);
-          continue;
-        }
-
-        // TODO does a log still exist in Comet38?
-        appendEvent(msg, txEvent, { events: [], log: '', msg_index: -1 });
       }
     } else {
+      processTxEvents();
       // For some tests that have invalid data
     }
   }
@@ -473,18 +504,19 @@ export function wrapEvent(
  * Cosmos has instant finalization, there is also no rpc method to get a block by hash
  * To get around this we use blockHeights as hashes
  */
-export function cosmosBlockToHeader(blockHeight: number): Header {
+export function cosmosBlockToHeader(header: CosmosHeader): Header {
   return {
-    blockHeight: blockHeight,
-    blockHash: blockHeight.toString(),
-    parentHash: (blockHeight - 1).toString(),
+    blockHeight: header.height,
+    blockHash: header.height.toString(),
+    parentHash: (header.height - 1).toString(),
+    timestamp: getBlockTimestamp(header),
   };
 }
 
 export function formatBlockUtil<B extends BlockContent>(block: B): IBlock<B> {
   return {
     block,
-    getHeader: () => cosmosBlockToHeader(block.block.header.height),
+    getHeader: () => cosmosBlockToHeader(block.block.header),
   };
 }
 
@@ -535,9 +567,37 @@ export class LazyBlockContent implements BlockContent {
 
   get block(): CosmosBlock {
     if (!this._wrappedBlock) {
-      this._wrappedBlock = wrapBlock(this._blockInfo, [
-        ...this._results.results,
-      ]);
+      // Need to keep reference to LazyBlockContent for the getter methods
+      // eslint-disable-next-line @typescript-eslint/no-this-alias
+      const self = this;
+
+      this._wrappedBlock = {
+        blockId: this._blockInfo.blockId,
+        block: {
+          id: toHex(this._blockInfo.blockId.hash).toUpperCase(),
+          ...this._blockInfo.block,
+        },
+        header: this._blockInfo.block.header,
+        txs: [...this._results.results],
+
+        get transactions() {
+          return self.transactions;
+        },
+        get messages() {
+          return self.messages;
+        },
+        get events() {
+          return [
+            ...self.beginBlockEvents,
+            ...self.events,
+            ...self.endBlockEvents,
+            ...self.finalizeBlockEvents,
+          ];
+        },
+        toJSON() {
+          return omit(this, ['transactions', 'messages', 'events']);
+        },
+      } as CosmosBlock;
     }
     return this._wrappedBlock;
   }
@@ -586,6 +646,7 @@ export class LazyBlockContent implements BlockContent {
         this.block,
         [...results.beginBlockEvents],
         this._eventIdx,
+        CosmosEventKind.BeginBlock,
       );
       this._eventIdx += this._wrappedBeginBlockEvents.length;
     }
@@ -606,6 +667,7 @@ export class LazyBlockContent implements BlockContent {
         this.block,
         [...results.endBlockEvents],
         this._eventIdx,
+        CosmosEventKind.EndBlock,
       );
       this._eventIdx += this._wrappedEndBlockEvents.length;
     }
@@ -624,6 +686,7 @@ export class LazyBlockContent implements BlockContent {
         this.block,
         [...results.finalizeBlockEvents],
         this._eventIdx,
+        CosmosEventKind.FinalizeBlock,
       );
       this._eventIdx += this._wrappedFinalizedBlockEvents.length;
     }

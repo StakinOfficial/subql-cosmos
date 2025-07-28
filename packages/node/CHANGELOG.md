@@ -6,6 +6,71 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.2.1] - 2025-07-17
+### Fixed
+- tx hash calculation with networks other than Celestia (#337)
+
+## [5.2.0] - 2025-07-09
+### Added
+- Support for decoding Celestia transactions (#335)
+
+## [5.1.2] - 2025-07-01
+### Changed
+- Update `@subql/common` and `@subql/node-core` (#332)
+
+## [5.1.1] - 2025-06-23
+### Changed
+- Update RPC client selection for CometBFT v1.0 (#330)
+
+## [5.1.0] - 2025-05-21
+### Changed
+- Update `@subql/node-core` with support for enum value additions in migrations
+
+## [5.0.3] - 2025-05-20
+### Fixed
+- Missing dependency for testing subcommand (#326)
+
+### Changed
+- Update `@subql/node-core`
+
+## [5.0.2] - 2025-05-01
+### Changed
+- Re release of previously failed release
+
+## [5.0.1] - 2025-05-01
+### Changed
+- Update `@subql/node-core` with workers performance fix
+
+## [5.0.0] - 2025-04-24
+### Added
+- Support for rewinds and unfinalized blocks with multichain projects (#322)
+
+## [4.6.0] - 2025-03-10
+### Changed
+- Update `@subql/node-core` an implement BlockchainService (#318)
+
+## [4.5.1] - 2025-02-13
+### Fixed
+- Logs for failed transactions not being included (#313)
+- Headers not including timestamps (#315)
+
+## [4.5.0] - 2025-02-10
+### Changed
+- Use forked version of `@cosmjs/stargate` (#310)
+
+### Fixed
+- Error being thrown when stringify new block structure because of circular reference (#311)
+
+## [4.4.1] - 2025-02-04
+### Changed
+- Update header year to 2025 (#307)
+- Update `@subql/node-core`
+
+## [4.4.0] - 2025-01-28
+### Changed
+- Update block type to allow access to decoded transactions, messages and events (#305)
+- Update `@subql/node-core` with minor bug fixes and improvements
+
 ## [4.3.0] - 2024-12-17
 ### Changed
 - Update `@subql/node-core` and `@subql/common` dependencies
@@ -480,7 +545,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Init release
 
-[Unreleased]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.3.0...HEAD
+[Unreleased]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/5.2.1...HEAD
+[5.2.1]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/5.2.0...node-cosmos/5.2.1
+[5.2.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/5.1.2...node-cosmos/5.2.0
+[5.1.2]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/5.1.1...node-cosmos/5.1.2
+[5.1.1]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/5.1.0...node-cosmos/5.1.1
+[5.1.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/5.0.3...node-cosmos/5.1.0
+[5.0.3]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/5.0.2...node-cosmos/5.0.3
+[5.0.2]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/5.0.1...node-cosmos/5.0.2
+[5.0.1]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/5.0.0...node-cosmos/5.0.1
+[5.0.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.6.0...node-cosmos/5.0.0
+[4.6.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.5.1...node-cosmos/4.6.0
+[4.5.1]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.5.0...node-cosmos/4.5.1
+[4.5.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.4.1...node-cosmos/4.5.0
+[4.4.1]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.4.0...node-cosmos/4.4.1
+[4.4.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.3.0...node-cosmos/4.4.0
 [4.3.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.2.1...node-cosmos/4.3.0
 [4.2.1]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.2.0...node-cosmos/4.2.1
 [4.2.0]: https://github.com/subquery/subql-cosmos/compare/node-cosmos/4.1.4...node-cosmos/4.2.0

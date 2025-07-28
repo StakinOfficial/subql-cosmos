@@ -1,4 +1,4 @@
-// Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
+// // Copyright 2020-2025 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
 import { Registry } from '@cosmjs/proto-signing';
@@ -42,7 +42,7 @@ async function connectComet(
   if (version.startsWith('0.37.')) {
     logger.debug(`Using Tendermint 37 Client`);
     out = tm37Client;
-  } else if (version.startsWith('0.38.')) {
+  } else if (version.startsWith('0.38.') || version.startsWith('1.0.')) {
     tm37Client.disconnect();
     logger.debug(`Using Comet 38 Client`);
     out = await Comet38Client.create(client);

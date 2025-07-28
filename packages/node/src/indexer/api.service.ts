@@ -1,13 +1,12 @@
-// Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
+// // Copyright 2020-2025 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
 import assert from 'assert';
 import { CosmWasmClient, IndexedTx } from '@cosmjs/cosmwasm-stargate';
 import { toHex } from '@cosmjs/encoding';
-import { Uint53 } from '@cosmjs/math';
 import { GeneratedType, Registry } from '@cosmjs/proto-signing';
-import { Block, defaultRegistryTypes, SearchTxQuery } from '@cosmjs/stargate';
-import { CometClient, toRfc3339WithNanoseconds } from '@cosmjs/tendermint-rpc';
+import { defaultRegistryTypes, SearchTxQuery } from '@cosmjs/stargate';
+import { CometClient } from '@cosmjs/tendermint-rpc';
 import { Injectable, OnApplicationShutdown } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CosmosProjectNetConfig } from '@subql/common-cosmos';
@@ -253,24 +252,6 @@ export class CosmosSafeClient
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     super(cometClient as any);
     this.height = height;
-  }
-
-  // Deprecate
-  async getBlock(): Promise<Block> {
-    const response = await this.forceGetCometClient().block(this.height);
-    return {
-      id: toHex(response.blockId.hash).toUpperCase(),
-      header: {
-        version: {
-          block: new Uint53(response.block.header.version.block).toString(),
-          app: new Uint53(response.block.header.version.app).toString(),
-        },
-        height: response.block.header.height,
-        chainId: response.block.header.chainId,
-        time: toRfc3339WithNanoseconds(response.block.header.time),
-      },
-      txs: response.block.txs,
-    };
   }
 
   async validators(): Promise<

@@ -1,4 +1,4 @@
-// Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
+// // Copyright 2020-2025 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
 import { CosmosMessageFilter } from '@subql/common-cosmos';
@@ -50,7 +50,7 @@ async function mockDictionaryService(
     {
       network: {
         dictionary: url,
-        chianId: 'juno-1',
+        chianId: 'fetchhub-4',
       },
     } as any,
     nodeConfig,
@@ -66,7 +66,7 @@ describe('Dictionary Queries', () => {
 
   beforeAll(async () => {
     dictionary = await mockDictionaryService(
-      'https://gateway.subquery.network/query/QmPjq55mgUt9S8S491Q3wEbb87fXyEkdxymT6Gwe2xe1Z1',
+      'https://datasource.subquery.dev/query/QmfKJuaL8iwwnSwaKt7RjTBk6Q5aUPqBzcZ1J2Q68ZvnLf',
     );
   });
 

@@ -1,4 +1,4 @@
-// Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
+// // Copyright 2020-2025 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
 import assert from 'assert';
@@ -325,7 +325,7 @@ export class KyveApi {
     try {
       await timeout(
         new Promise<void>((resolve, reject) => {
-          writeStream.on('open', resolve);
+          writeStream.on('open', () => resolve());
           writeStream.on('error', reject);
         }),
         WRITER_TIMEOUT,

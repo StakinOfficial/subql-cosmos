@@ -1,11 +1,9 @@
-// Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
+// Copyright 2020-2025 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
 import { Module } from '@nestjs/common';
-import { EventEmitter2, EventEmitterModule } from '@nestjs/event-emitter';
-import { SchedulerRegistry } from '@nestjs/schedule';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
-  DbModule,
   ForceCleanService,
   ReindexService,
   StoreService,
@@ -14,20 +12,21 @@ import {
   NodeConfig,
   ConnectionPoolStateManager,
   ConnectionPoolService,
+  DsProcessorService,
+  DynamicDsService,
+  UnfinalizedBlocksService,
+  MultiChainRewindService,
 } from '@subql/node-core';
 import { Sequelize } from '@subql/x-sequelize';
-import { ConfigureModule } from '../configure/configure.module';
+import { BlockchainService } from '../blockchain.service';
 import { ApiService } from '../indexer/api.service';
-import { DsProcessorService } from '../indexer/ds-processor.service';
-import { DynamicDsService } from '../indexer/dynamic-ds.service';
-import { UnfinalizedBlocksService } from '../indexer/unfinalizedBlocks.service';
 
 @Module({
   providers: [
     {
       provide: 'IStoreModelProvider',
       useFactory: storeModelFactory,
-      inject: [NodeConfig, EventEmitter2, SchedulerRegistry, Sequelize],
+      inject: [NodeConfig, EventEmitter2, Sequelize],
     },
     StoreService,
     ReindexService,
@@ -45,7 +44,7 @@ import { UnfinalizedBlocksService } from '../indexer/unfinalizedBlocks.service';
     ConnectionPoolStateManager,
     ConnectionPoolService,
     {
-      provide: ApiService,
+      provide: 'APIService',
       useFactory: ApiService.create.bind(ApiService),
       inject: [
         'ISubqueryProject',
@@ -54,19 +53,12 @@ import { UnfinalizedBlocksService } from '../indexer/unfinalizedBlocks.service';
         NodeConfig,
       ],
     },
-    SchedulerRegistry,
+    {
+      provide: 'IBlockchainService',
+      useClass: BlockchainService,
+    },
+    MultiChainRewindService,
   ],
   controllers: [],
 })
 export class ReindexFeatureModule {}
-
-@Module({
-  imports: [
-    DbModule.forRoot(),
-    ConfigureModule.register(),
-    ReindexFeatureModule,
-    EventEmitterModule.forRoot(),
-  ],
-  controllers: [],
-})
-export class ReindexModule {}

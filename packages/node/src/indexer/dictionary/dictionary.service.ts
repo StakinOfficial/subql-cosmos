@@ -1,4 +1,4 @@
-// Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
+// // Copyright 2020-2025 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
 import { Inject, Injectable } from '@nestjs/common';
@@ -8,10 +8,10 @@ import {
   NodeConfig,
   DictionaryService as BaseDictionaryService,
   getLogger,
+  DsProcessorService,
 } from '@subql/node-core';
 import { CosmosDatasource } from '@subql/types-cosmos';
 import { SubqueryProject } from '../../configure/SubqueryProject';
-import { DsProcessorService } from '../ds-processor.service';
 import { BlockContent } from '../types';
 import { DictionaryV1 } from './v1';
 

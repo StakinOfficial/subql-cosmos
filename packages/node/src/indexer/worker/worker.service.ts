@@ -1,4 +1,4 @@
-// Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
+// // Copyright 2020-2025 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
 import { threadId } from 'node:worker_threads';
@@ -37,7 +37,7 @@ export class WorkerService extends BaseWorkerService<
   CosmosDatasource
 > {
   constructor(
-    private apiService: ApiService,
+    @Inject('APIService') private apiService: ApiService,
     private indexerManager: IndexerManager,
     @Inject('IProjectService')
     projectService: IProjectService<CosmosDatasource>,
@@ -58,7 +58,7 @@ export class WorkerService extends BaseWorkerService<
   }
 
   protected toBlockResponse(block: BlockContent): FetchBlockResponse {
-    return cosmosBlockToHeader(block.block.header.height);
+    return cosmosBlockToHeader(block.block.header);
   }
 
   protected async processFetchedBlock(

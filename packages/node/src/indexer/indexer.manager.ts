@@ -1,7 +1,7 @@
-// Copyright 2020-2024 SubQuery Pte Ltd authors & contributors
+// // Copyright 2020-2025 SubQuery Pte Ltd authors & contributors
 // SPDX-License-Identifier: GPL-3.0
 
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import {
   isBlockHandlerProcessor,
   isTransactionHandlerProcessor,
@@ -20,6 +20,9 @@ import {
   BaseIndexerManager,
   IBlock,
   SandboxService,
+  DsProcessorService,
+  DynamicDsService,
+  UnfinalizedBlocksService,
 } from '@subql/node-core';
 import {
   CosmosBlock,
@@ -29,16 +32,14 @@ import {
   CosmosCustomDatasource,
   CosmosDatasource,
 } from '@subql/types-cosmos';
+import { BlockchainService } from '../blockchain.service';
 import * as CosmosUtil from '../utils/cosmos';
 import {
   ApiService as CosmosApiService,
   CosmosClient,
   CosmosSafeClient,
 } from './api.service';
-import { DsProcessorService } from './ds-processor.service';
-import { DynamicDsService } from './dynamic-ds.service';
 import { BlockContent } from './types';
-import { UnfinalizedBlocksService } from './unfinalizedBlocks.service';
 
 @Injectable()
 export class IndexerManager extends BaseIndexerManager<
@@ -56,12 +57,17 @@ export class IndexerManager extends BaseIndexerManager<
   protected isCustomDs = isCustomCosmosDs;
 
   constructor(
-    apiService: CosmosApiService,
+    @Inject('APIService') apiService: CosmosApiService,
     nodeConfig: NodeConfig,
     sandboxService: SandboxService<CosmosSafeClient, CosmosClient>,
-    dsProcessorService: DsProcessorService,
-    dynamicDsService: DynamicDsService,
+    dsProcessorService: DsProcessorService<
+      CosmosDatasource,
+      CosmosCustomDatasource
+    >,
+    dynamicDsService: DynamicDsService<CosmosDatasource>,
+    @Inject('IUnfinalizedBlocksService')
     unfinalizedBlocksService: UnfinalizedBlocksService,
+    @Inject('IBlockchainService') blockchainService: BlockchainService,
   ) {
     super(
       apiService,
@@ -72,6 +78,7 @@ export class IndexerManager extends BaseIndexerManager<
       unfinalizedBlocksService,
       FilterTypeMap,
       ProcessorTypeMap,
+      blockchainService,
     );
   }
 
@@ -89,6 +96,7 @@ export class IndexerManager extends BaseIndexerManager<
     });
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   @profiler()
   async indexBlock(
     block: IBlock<BlockContent>,
@@ -115,18 +123,39 @@ export class IndexerManager extends BaseIndexerManager<
       await this.indexEvent(evt, dataSources, getVM);
     }
 
+    // Group messages so we only iterate once.
+    const groupedMessages = blockContent.messages.reduce((acc, msg) => {
+      acc[msg.tx.hash] ??= [];
+      acc[msg.tx.hash].push(msg);
+      return acc;
+    }, {} as Record<string, CosmosMessage[]>);
+
+    // Group events so we only iterate once.
+    const groupedEvents = blockContent.events.reduce((acc, evt) => {
+      acc[evt.tx.hash] ??= {};
+      // -1 for events that arent associated with a message
+      const idxKey = evt.msg?.idx ?? -1;
+      acc[evt.tx.hash][idxKey] ??= [];
+      acc[evt.tx.hash][idxKey].push(evt);
+      return acc;
+    }, {} as Record<string /* TX hash*/, Record<number /* MSG index or -1 for tx event */, CosmosEvent[]>>);
+
     for (const tx of blockContent.transactions) {
       await this.indexTransaction(tx, dataSources, getVM);
-      const msgs = blockContent.messages.filter(
-        (msg) => msg.tx.hash === tx.hash,
-      );
-      for (const msg of msgs) {
-        await this.indexMessage(msg, dataSources, getVM);
-        const events = blockContent.events.filter(
-          (event) => event.tx.hash === tx.hash && event.msg?.idx === msg.idx,
-        );
 
-        for (const evt of events) {
+      const txEvents = groupedEvents[tx.hash];
+
+      for (const msg of groupedMessages[tx.hash]) {
+        await this.indexMessage(msg, dataSources, getVM);
+        if (txEvents?.[msg.idx]) {
+          for (const evt of txEvents[msg.idx]) {
+            await this.indexEvent(evt, dataSources, getVM);
+          }
+        }
+      }
+
+      if (txEvents?.[-1]) {
+        for (const evt of txEvents[-1]) {
           await this.indexEvent(evt, dataSources, getVM);
         }
       }
