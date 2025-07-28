@@ -2396,7 +2396,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@cosmjs/json-rpc@npm:0.32.4":
+"@cosmjs/json-rpc@npm:0.32.4, @cosmjs/json-rpc@npm:^0.32.4":
   version: 0.32.4
   resolution: "@cosmjs/json-rpc@npm:0.32.4"
   dependencies:
@@ -2475,7 +2475,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@cosmjs/socket@npm:0.32.4":
+"@cosmjs/socket@npm:0.32.4, @cosmjs/socket@npm:^0.32.4":
   version: 0.32.4
   resolution: "@cosmjs/socket@npm:0.32.4"
   dependencies:
@@ -2484,18 +2484,6 @@ __metadata:
     ws: ^7
     xstream: ^11.14.0
   checksum: 26125bbf261d5d77bec3c5340a9c60c1e512bee747984b3333521491aa4f4d2a3e2cba7f1e412013b38835eff875066e645d86f752d7936f19f9eae18b9d97e5
-  languageName: node
-  linkType: hard
-
-"@cosmjs/socket@npm:^0.32.3":
-  version: 0.32.3
-  resolution: "@cosmjs/socket@npm:0.32.3"
-  dependencies:
-    "@cosmjs/stream": ^0.32.3
-    isomorphic-ws: ^4.0.1
-    ws: ^7
-    xstream: ^11.14.0
-  checksum: 9e695a21b81c7987999c1452f18a341428ad01cda65b392386440d26589c2b53af81954c36156c5be88ddd97982c20db2fb938b4349a04f18f05b65547796556
   languageName: node
   linkType: hard
 
@@ -2593,6 +2581,24 @@ __metadata:
     readonly-date: ^1.0.0
     xstream: ^11.14.0
   checksum: f98853e8a38690921adef946cf6bfd35a6ed9906c353700a24a85631c387961d7a2ad93b437a4c95d56d4452b50161075814fc353bd72a29f85bae154c6ff4f7
+  languageName: node
+  linkType: hard
+
+"@cosmjs/tendermint-rpc@npm:^0.32.3, @cosmjs/tendermint-rpc@npm:^0.32.4":
+  version: 0.32.4
+  resolution: "@cosmjs/tendermint-rpc@npm:0.32.4"
+  dependencies:
+    "@cosmjs/crypto": ^0.32.4
+    "@cosmjs/encoding": ^0.32.4
+    "@cosmjs/json-rpc": ^0.32.4
+    "@cosmjs/math": ^0.32.4
+    "@cosmjs/socket": ^0.32.4
+    "@cosmjs/stream": ^0.32.4
+    "@cosmjs/utils": ^0.32.4
+    axios: ^1.6.0
+    readonly-date: ^1.0.0
+    xstream: ^11.14.0
+  checksum: 284e5ed3edd359f70fde36d64357e5b11b8d07d29dc087cc2121f90fbdb2c152a8927abbfa9e9a40d7713d48789ce46672e2e076dba4813c2a9a47ed1f0206a9
   languageName: node
   linkType: hard
 
@@ -4288,7 +4294,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@subql/common@npm:^5.7.2, @subql/common@npm:~5.7.2":
+"@subql/common@npm:^5.7.2":
   version: 5.7.2
   resolution: "@subql/common@npm:5.7.2"
   dependencies:
@@ -4305,18 +4311,35 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@subql/common@npm:~5.7.3":
+  version: 5.7.3
+  resolution: "@subql/common@npm:5.7.3"
+  dependencies:
+    "@subql/types-core": ~2.1.1
+    axios: ^1.9.0
+    class-transformer: ^0.5.1
+    class-validator: 0.14.1
+    form-data: ^4.0.4
+    js-yaml: ^4.1.0
+    reflect-metadata: ^0.2.2
+    semver: ^7.6.3
+    update-notifier: ^5.1.0
+  checksum: 195f9128afb8b801ef6d8c55530e9f5261b435b23ccc8c677671554d1cb350487f74cf9563c0caeede7f900fdf215db17b13fb92067bde0a6ec00959bfe36ebf
+  languageName: node
+  linkType: hard
+
 "@subql/node-core@npm:^18.2.1":
-  version: 18.2.1
-  resolution: "@subql/node-core@npm:18.2.1"
+  version: 18.3.0
+  resolution: "@subql/node-core@npm:18.3.0"
   dependencies:
     "@apollo/client": ^3.11.2
     "@nestjs/common": ^11.0.16
     "@nestjs/event-emitter": ^3.0.0
     "@nestjs/schedule": ^5.0.1
-    "@subql/common": ~5.7.2
+    "@subql/common": ~5.7.3
     "@subql/testing": ~2.3.0
     "@subql/types": ~3.14.1
-    "@subql/utils": ~2.21.1-1
+    "@subql/utils": ~2.21.1
     "@willsoto/nestjs-prometheus": ^6.0.2
     async-mutex: ^0.5.0
     cron-converter: ^2.0.1
@@ -4333,7 +4356,7 @@ __metadata:
     toposort-class: ^1.0.1
     vm2: ^3.9.19
     yargs: ^16.2.0
-  checksum: 77e5cd657813adb4faeb453c7320a6e14c65b957a9e9d038b8c11b3f3d875da69710347ba70ec966bc2a0622084499e9deb69a792fec3f1f54684b937b9d33db
+  checksum: 774401869569afd7733ab2611fa04f69c1bd624b81d8ccd34f34157c7623e7b20abc926e30a092e1edd69704694405e9e706815bcfd43bfc2d3afc9d9a97f8c8
   languageName: node
   linkType: hard
 
@@ -4426,9 +4449,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@subql/utils@npm:~2.21.1-1":
-  version: 2.21.1-1
-  resolution: "@subql/utils@npm:2.21.1-1"
+"@subql/utils@npm:~2.21.1":
+  version: 2.21.1
+  resolution: "@subql/utils@npm:2.21.1"
   dependencies:
     "@polkadot/util": ^13.5.3
     "@polkadot/util-crypto": ^13.5.3
@@ -4441,7 +4464,7 @@ __metadata:
     lodash: ^4.17.21
     pino: ^6.13.3
     rotating-file-stream: ^3.2.3
-  checksum: 33892f33c1de23864ec74503d5fbe4eb536b509a63683cb820f90a6f8f9db25afcd5068a2d07d5eff5d2478a8ace5adc55cb0c157ab5bd79c8bfd581920051fb
+  checksum: 805d6fa302f1366c097c97560cb94c1167de633ca2a62db4cd30f6b83fce1c14dfc6d0e07100e4fa4b129e23a91a01f9e2339ba88eaf4880a76a0e40eebf69be
   languageName: node
   linkType: hard
 
@@ -8485,6 +8508,19 @@ __metadata:
     combined-stream: ^1.0.8
     mime-types: ^2.1.12
   checksum: ccee458cd5baf234d6b57f349fe9cc5f9a2ea8fd1af5ecda501a18fd1572a6dd3bf08a49f00568afd995b6a65af34cb8dec083cf9d582c4e621836499498dd84
+  languageName: node
+  linkType: hard
+
+"form-data@npm:^4.0.4":
+  version: 4.0.4
+  resolution: "form-data@npm:4.0.4"
+  dependencies:
+    asynckit: ^0.4.0
+    combined-stream: ^1.0.8
+    es-set-tostringtag: ^2.1.0
+    hasown: ^2.0.2
+    mime-types: ^2.1.12
+  checksum: 9b7788836df9fa5a6999e0c02515b001946b2a868cfe53f026c69e2c537a2ff9fbfb8e9d2b678744628f3dc7a2d6e14e4e45dfaf68aa6239727f0bdb8ce0abf2
   languageName: node
   linkType: hard
 
