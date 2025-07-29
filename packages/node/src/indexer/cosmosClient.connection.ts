@@ -38,11 +38,17 @@ async function connectComet(
   // Using 0.34 as the fallback.
   let out: CometClient;
   const tm37Client = await Tendermint37Client.create(client);
-  const version = (await tm37Client.status()).nodeInfo.version;
+  const nodeInfo = (await tm37Client.status()).nodeInfo;
+  const version = nodeInfo.version;
   if (version.startsWith('0.37.')) {
     logger.debug(`Using Tendermint 37 Client`);
     out = tm37Client;
-  } else if (version.startsWith('0.38.') || version.startsWith('1.0.')) {
+    // for sei also use comet38
+  } else if (
+    version.startsWith('0.38.') ||
+    version.startsWith('1.0.') ||
+    (version === '0.35.0-unreleased' && nodeInfo.network === 'pacific-1')
+  ) {
     tm37Client.disconnect();
     logger.debug(`Using Comet 38 Client`);
     out = await Comet38Client.create(client);
