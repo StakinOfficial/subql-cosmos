@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.3.0] - 2025-12-09
+### Changed
+- Updated `@subql/types-core` (#356)
+
+## [4.2.0] - 2025-08-26
+### Changed
+- Update cosmjs from fork to latest official release (#347)
+
 ## [4.1.3] - 2025-07-17
 ### Changed
 - Update \`@subql/types-core\` (#337)
@@ -158,7 +166,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix chainTypes not being in deployments
 
 ## [0.0.5] - 2022-06-15
-[Unreleased]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/4.1.3...HEAD
+[Unreleased]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/4.3.0...HEAD
+[4.3.0]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/4.2.0...types-cosmos/4.3.0
+[4.2.0]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/4.1.3...types-cosmos/4.2.0
 [4.1.3]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/4.1.2...types-cosmos/4.1.3
 [4.1.2]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/4.1.1...types-cosmos/4.1.2
 [4.1.1]: https://github.com/subquery/subql-cosmos/compare/types-cosmos/4.1.0...types-cosmos/4.1.1

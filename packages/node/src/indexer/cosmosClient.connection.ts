@@ -37,7 +37,7 @@ async function connectComet(
   // Tendermint/CometBFT 0.34/0.37/0.38 auto-detection. Starting with 0.37 we seem to get reliable versions again 🎉
   // Using 0.34 as the fallback.
   let out: CometClient;
-  const tm37Client = await Tendermint37Client.create(client);
+  const tm37Client = Tendermint37Client.create(client);
   const nodeInfo = (await tm37Client.status()).nodeInfo;
   const version = nodeInfo.version;
   if (version.startsWith('0.37.')) {
@@ -51,11 +51,11 @@ async function connectComet(
   ) {
     tm37Client.disconnect();
     logger.debug(`Using Comet 38 Client`);
-    out = await Comet38Client.create(client);
+    out = Comet38Client.create(client);
   } else {
     tm37Client.disconnect();
     logger.debug(`Using Tendermint 34 Client`);
-    out = await Tendermint34Client.create(client);
+    out = Tendermint34Client.create(client);
   }
   return out;
 }
