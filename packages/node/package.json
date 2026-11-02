@@ -60,7 +60,8 @@
     "@subql/utils": "*"
   },
   "resolutions": {
-    "@cosmjs/tendermint-rpc": "npm:@subql/x-cosmos-tendermint-rpc@0.32.4"
+    "@cosmjs/tendermint-rpc": "npm:@subql/x-cosmos-tendermint-rpc@0.32.4",
+    "vm2": "^3.12.2"
   },
   "files": [
     "/bin",
