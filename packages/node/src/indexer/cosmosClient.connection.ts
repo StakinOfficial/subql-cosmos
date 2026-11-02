@@ -45,6 +45,7 @@ async function connectComet(
     out = tm37Client;
     // for sei also use comet38
   } else if (
+    version.startsWith('0.39.') ||
     version.startsWith('0.38.') ||
     version.startsWith('1.0.') ||
     (version === '0.35.0-unreleased' && nodeInfo.network === 'pacific-1')

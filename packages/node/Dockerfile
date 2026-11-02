@@ -34,7 +34,6 @@ RUN cd $(npm root -g)/@subql/node-cosmos && npx patch-package
 
 # Clean up unused deps
 RUN rm /app.tgz && \
-    yarn cache clean && \
     rm -rf /root/.npm /root/.cache
 
 # Create ./.monitor directory and set permissions
